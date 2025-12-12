@@ -101,8 +101,20 @@
         <aside class="sidebar no-print">
             <div class="brand"><i class="bi bi-c-square-fill brand-icon"></i> ContextCore</div>
             <div class="nav-item active"><i class="bi bi-grid-1x2-fill"></i> Site Intelligence</div>
-            <div class="nav-item"><i class="bi bi-layers-fill"></i> Void Analysis</div>
-            <div class="nav-item"><i class="bi bi-bookmark-fill"></i> Saved Reports</div>
+            
+            <div class="nav-item" onclick="showProFeatureAlert('Void Analysis')">
+                <i class="bi bi-layers-fill"></i> Void Analysis 
+                <span class="ms-auto badge bg-primary text-white" style="font-size:0.7rem;">PRO</span>
+            </div>
+            
+            <div class="nav-item" onclick="showReportsAlert()">
+                <i class="bi bi-bookmark-fill"></i> Saved Reports
+            </div>
+            
+            <div class="user-panel" style="margin-top:auto; padding-top:1.5rem; border-top:1px solid #1e293b;">
+                <div class="fw-bold" style="font-size:0.9rem;">Guest Broker</div>
+                <div class="text-muted" style="font-size:0.8rem;">Free Plan</div>
+            </div>
         </aside>
 
         <main class="main-content" id="printableArea">
@@ -256,7 +268,7 @@
             if(mainMarker) map.removeLayer(mainMarker);
             if(radiusCircle) map.removeLayer(radiusCircle);
 
-            mainMarker = L.marker([data.loc.lat, data.loc.lng]).addTo(map).bindPopup("Subject").openPopup();
+            mainMarker = L.marker([data.loc.lat, data.loc.lng]).addTo(map).bindPopup(data.loc.address).openPopup();
             radiusCircle = L.circle([data.loc.lat, data.loc.lng], { radius: 3000, color: '#2563eb', fillOpacity: 0.05 }).addTo(map);
 
             // List
@@ -273,15 +285,66 @@
                 }
             });
         }
+        
+        // --- 4. ACTIVATED SIDEBAR LOGIC ---
+        function showProFeatureAlert(featureName) {
+            alert(`Feature Locked: ${featureName} requires a ContextCore Pro subscription. Please upgrade to unlock market gap analysis and predictive modeling.`);
+        }
 
+        function showReportsAlert() {
+            alert("To save this report, please click the 'Export Brief' button in the top right corner. You can save the generated PDF anywhere on your device.");
+        }
+
+        // --- 5. PDF EXPORT (Monetization + Map Fix) ---
         function downloadPDF() {
-            const el = document.getElementById('printableArea');
-            document.querySelectorAll('.no-print').forEach(e => e.style.display = 'none');
-            document.querySelector('.pdf-header').style.display = 'block';
-            html2pdf().set({ margin: 0.25, filename: 'ContextCore_Brief.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' } }).from(el).save().then(() => {
-                document.querySelectorAll('.no-print').forEach(e => e.style.display = 'flex');
-                document.querySelector('.pdf-header').style.display = 'none';
-            });
+            const paymentLink = 'YOUR_STRIPE_PAYMENT_HERE'; // *** IMPORTANT: PASTE YOUR STRIPE LINK HERE ***
+            
+            const isDataLoaded = document.getElementById('resScore').innerText !== '--';
+
+            if (!isDataLoaded) {
+                alert("Please run an analysis first before attempting to export a brief.");
+                return;
+            }
+
+            const confirmExport = confirm("To generate and download the final Investment Brief, you must have a ContextCore Pro subscription. Click OK to proceed to checkout ($49/mo).");
+            
+            if (confirmExport) {
+                // Redirect to Stripe - This is the primary monetization step
+                window.open(paymentLink, '_blank'); 
+                
+                // --- PDF GENERATION FOR TESTING ONLY ---
+                // This block executes for testing but should be behind a successful payment check
+                const el = document.getElementById('printableArea');
+                
+                // Hide non-printable elements (command bar, sidebar, map controls)
+                document.querySelectorAll('.no-print').forEach(e => e.style.display = 'none');
+                document.querySelector('.pdf-header').style.display = 'block';
+
+                // Hide Leaflet zoom controls for the PDF
+                const controlContainer = document.querySelector('.leaflet-control-container');
+                if (controlContainer) controlContainer.style.display = 'none';
+
+                // CRITICAL FIX: Force Leaflet to re-render the map tiles and wait
+                map.invalidateSize(true); 
+                
+                setTimeout(() => {
+                    html2pdf().set({
+                        margin: 0.25,
+                        filename: 'ContextCore_Brief.pdf',
+                        image: { type: 'jpeg', quality: 0.98 },
+                        html2canvas: { scale: 2 },
+                        jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
+                    }).from(el).save().then(() => {
+                        // Restore hidden elements after PDF generation
+                        document.querySelectorAll('.no-print').forEach(e => e.style.display = 'flex');
+                        document.querySelector('.pdf-header').style.display = 'none';
+                        if (controlContainer) controlContainer.style.display = 'block';
+                    });
+                }, 150); // Small delay to guarantee map rendering
+                
+            } else {
+                alert("Report export cancelled.");
+            }
         }
     </script>
 </body>
