@@ -12,289 +12,284 @@
 
     <style>
         :root {
-            --primary-bg: #f3f4f6;
-            --sidebar-bg: #111827; /* Dark Slate */
-            --card-bg: #ffffff;
-            --text-main: #1f2937;
-            --accent-blue: #2563eb;
-            --success-green: #059669;
+            --bg-body: #f3f4f6;
+            --bg-nav: #111827; /* Dark Slate */
+            --primary: #2563eb;
+            --success: #10b981;
+            --text-dark: #1f2937;
+            --text-muted: #6b7280;
         }
 
-        body { font-family: 'Inter', sans-serif; background-color: var(--primary-bg); color: var(--text-main); font-size: 0.9rem; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-body); color: var(--text-dark); }
+
+        /* Command Bar (Header) */
+        .navbar { background-color: var(--bg-nav); padding: 1rem 0; }
+        .navbar-brand { color: white !important; font-weight: 700; letter-spacing: -0.5px; font-size: 1.25rem; }
+        .nav-tagline { color: #9ca3af; font-weight: 300; font-size: 0.85rem; margin-left: 10px; border-left: 1px solid #374151; padding-left: 10px;}
         
-        /* Navbar as a "Command Bar" */
-        .navbar { background-color: white; border-bottom: 1px solid #e5e7eb; padding: 0.75rem 0; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-        .brand-logo { font-weight: 800; letter-spacing: -0.5px; color: #111827; font-size: 1.25rem; }
+        /* Search Area */
+        .search-card { background: white; border: none; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem; }
+        .form-control-lg { border: 2px solid #e5e7eb; font-size: 1rem; }
+        .form-control-lg:focus { border-color: var(--primary); box-shadow: none; }
         
-        /* Main Layout */
-        .main-container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
-        
-        /* The "Glass" Card Style */
-        .stat-card {
-            background: var(--card-bg);
+        /* Data Cards (Glass Effect) */
+        .metric-card {
+            background: white;
             border: 1px solid #e5e7eb;
             border-radius: 12px;
             padding: 1.5rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
             height: 100%;
-            transition: all 0.2s ease;
+            transition: transform 0.2s;
+            position: relative;
+            overflow: hidden;
         }
-        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        .metric-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
         
-        .stat-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; margin-bottom: 0.5rem; }
-        .stat-val { font-size: 1.8rem; font-weight: 700; color: #111827; letter-spacing: -1px; }
+        .metric-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600; margin-bottom: 0.5rem; }
+        .metric-value { font-size: 2rem; font-weight: 800; color: var(--text-dark); letter-spacing: -1px; }
         
-        /* The Score Badge - The Hero Element */
+        /* Opportunity Score (The Hero) */
+        .score-display { 
+            display: flex; align-items: center; justify-content: space-between;
+        }
         .score-circle {
-            width: 80px; height: 80px;
+            width: 70px; height: 70px;
             border-radius: 50%;
+            background: var(--success);
+            color: white;
             display: flex; align-items: center; justify-content: center;
             font-size: 2rem; font-weight: 800;
-            color: white;
-            background: #10b981; /* Default Green */
-            box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
         }
 
-        /* Map Styling */
-        #map { height: 500px; width: 100%; border-radius: 12px; border: 1px solid #e5e7eb; }
-
-        /* Search Bar */
-        .search-input { border: 2px solid #e5e7eb; border-radius: 8px; padding: 0.75rem; font-weight: 500; }
-        .search-input:focus { border-color: var(--accent-blue); box-shadow: none; }
-        .btn-analyze { background-color: #111827; color: white; border-radius: 8px; font-weight: 600; padding: 0.75rem 2rem; border: none; }
-        .btn-analyze:hover { background-color: #000; }
-
-        /* Competitor List */
-        .comp-item { padding: 1rem 0; border-bottom: 1px solid #f3f4f6; display: flex; justify-content: space-between; align-items: center; }
-        .comp-item:last-child { border-bottom: none; }
-        .comp-name { font-weight: 600; color: #374151; }
-        .comp-type { font-size: 0.8rem; color: #9ca3af; }
-
-        /* PDF Footer */
-        .pdf-only { display: none; }
+        /* Map & Radar */
+        #map { height: 500px; width: 100%; border-radius: 12px; }
+        .radar-list { max-height: 500px; overflow-y: auto; }
+        .radar-item { padding: 1rem; border-bottom: 1px solid #f3f4f6; display: flex; justify-content: space-between; align-items: center; }
+        .radar-item:last-child { border-bottom: none; }
+        
+        /* Button Styles */
+        .btn-analyze { background-color: var(--primary); border: none; font-weight: 600; padding: 0.75rem 2rem; }
+        .btn-analyze:hover { background-color: #1d4ed8; }
+        
+        /* Loading Overlay */
+        .loader { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.9); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; }
+        
+        /* Print/PDF Logic */
+        .pdf-header { display: none; margin-bottom: 2rem; border-bottom: 2px solid #000; padding-bottom: 1rem; }
     </style>
 </head>
 <body>
 
+    <div class="loader" id="loader">
+        <div class="spinner-border text-primary mb-3" role="status"></div>
+        <div class="fw-bold text-muted">Running Context Analysis...</div>
+    </div>
+
     <nav class="navbar sticky-top">
-        <div class="container-fluid main-container py-0">
-            <a class="navbar-brand brand-logo d-flex align-items-center" href="#">
-                <div style="background: #111827; color: white; width: 32px; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center; margin-right: 10px;">C</div>
-                ContextCore <span style="font-weight: 400; color: #9ca3af; margin-left: 10px; font-size: 0.9rem;">| MARKET INTELLIGENCE</span>
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="#">
+                <span style="background: white; color: var(--bg-nav); padding: 2px 8px; border-radius: 4px; margin-right: 8px;">C</span>
+                ContextCore <span class="nav-tagline">INVESTMENT INTELLIGENCE</span>
             </a>
             <div class="d-flex gap-2">
-                <button class="btn btn-outline-secondary btn-sm fw-bold">My Projects</button>
-                <button class="btn btn-primary btn-sm fw-bold d-flex align-items-center" onclick="downloadPDF()" style="background-color: var(--accent-blue); border: none;">
-                    <i class="bi bi-file-earmark-pdf-fill me-2"></i> Export Brief
+                <button class="btn btn-outline-light btn-sm" onclick="downloadPDF()">
+                    <i class="bi bi-download me-2"></i>Export Brief
                 </button>
             </div>
         </div>
     </nav>
 
-    <div class="main-container" id="dashboardArea">
+    <div class="container py-4" id="printArea">
         
-        <div class="row mb-5 no-print">
-            <div class="col-md-8 offset-md-2">
-                <div class="input-group shadow-sm">
-                    <input type="text" class="form-control search-input" id="addressInput" placeholder="Enter Site Address (e.g. 4300 South Park Dr, Stony Plain)">
-                    <button class="btn btn-analyze" onclick="analyzeLocation()">
-                        RUN ANALYSIS
-                    </button>
+        <div class="pdf-header text-center">
+            <h1>Investment Viability Report</h1>
+            <p class="text-muted">Generated by ContextCore</p>
+        </div>
+
+        <div class="search-card data-input">
+            <div class="row g-2">
+                <div class="col-md-9">
+                    <input type="text" class="form-control form-control-lg" id="addressInput" placeholder="Enter Site Address (e.g. 4300 South Park Dr)">
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-primary btn-lg w-100 btn-analyze" onclick="analyzeLocation()">ANALYZE SITE</button>
                 </div>
             </div>
         </div>
 
         <div class="row g-4 mb-4">
             <div class="col-md-4">
-                <div class="stat-card d-flex align-items-center justify-content-between">
-                    <div>
-                        <div class="stat-label">Opportunity Score</div>
-                        <div class="text-muted small mb-2">Algorithm Confidence: High</div>
-                        <span class="badge bg-success bg-opacity-10 text-success px-2 py-1">Recommended</span>
+                <div class="metric-card">
+                    <div class="metric-label">Opportunity Score</div>
+                    <div class="score-display">
+                        <div>
+                            <div class="metric-value" id="resScore">--</div>
+                            <span class="badge bg-success bg-opacity-10 text-success" id="resStatus">Awaiting Data</span>
+                        </div>
+                        <div class="score-circle">
+                            <i class="bi bi-bar-chart-fill" style="font-size: 1.5rem;"></i>
+                        </div>
                     </div>
-                    <div class="score-circle" id="resScore">--</div>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="stat-card">
-                    <div class="d-flex justify-content-between">
-                        <div class="stat-label">Avg Household Income</div>
-                        <i class="bi bi-wallet2 text-muted"></i>
+                <div class="metric-card">
+                    <div class="metric-label">Avg Household Income</div>
+                    <div class="metric-value" id="resInc">--</div>
+                    <div class="text-success small fw-bold mt-2">
+                        <i class="bi bi-arrow-up-right"></i> Top 20% Percentile
                     </div>
-                    <div class="stat-val mt-2" id="resInc">--</div>
-                    <div class="text-success small fw-bold mt-1"><i class="bi bi-arrow-up"></i> Top 20% of Region</div>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="stat-card">
-                    <div class="d-flex justify-content-between">
-                        <div class="stat-label">Est. Cap Rate</div>
-                        <i class="bi bi-graph-up-arrow text-muted"></i>
-                    </div>
-                    <div class="stat-val mt-2 text-primary" id="resCap">--</div>
-                    <div class="small text-muted mt-1">Based on Market Rents</div>
+                <div class="metric-card">
+                    <div class="metric-label">Projected Cap Rate</div>
+                    <div class="metric-value text-primary" id="resCap">--</div>
+                    <div class="text-muted small mt-2">Based on current market rents</div>
                 </div>
             </div>
         </div>
 
         <div class="row g-4">
             <div class="col-lg-8">
-                <div class="stat-card p-0 overflow-hidden">
-                    <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
-                        <span class="fw-bold small text-uppercase text-muted">Spatial Analysis</span>
-                        <span class="badge bg-light text-dark border">3km Radius Active</span>
+                <div class="metric-card p-0">
+                    <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-light">
+                        <span class="fw-bold small text-muted">SPATIAL ANALYSIS</span>
+                        <span class="badge bg-white text-dark border">3km Radius</span>
                     </div>
                     <div id="map"></div>
                 </div>
             </div>
-
             <div class="col-lg-4">
-                <div class="stat-card">
-                    <div class="stat-label mb-4">Competitive Landscape</div>
-                    
-                    <div id="resRadar">
-                        <div class="text-center text-muted py-5">
-                            <i class="bi bi-geo-alt display-4 mb-3 d-block opacity-25"></i>
-                            Waiting for Input
-                        </div>
+                <div class="metric-card p-0">
+                    <div class="p-3 border-bottom bg-light">
+                        <span class="fw-bold small text-muted">COMPETITOR RADAR</span>
                     </div>
-
-                    <div class="mt-4 p-3 bg-light rounded border">
-                        <div class="stat-label mb-2">AI Insight</div>
-                        <p class="small text-muted mb-0 lh-sm">
-                            <i class="bi bi-lightbulb-fill text-warning me-1"></i>
-                            <span id="aiInsight">Analysis required to generate insights.</span>
-                        </p>
+                    <div class="radar-list" id="resRadar">
+                        <div class="p-4 text-center text-muted">
+                            <i class="bi bi-radar display-4 opacity-25"></i>
+                            <p class="mt-2 small">Run analysis to scan sector.</p>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-        
-        <div class="pdf-only mt-5 text-center text-muted small">
-            <hr>
-            <p>Generated by ContextCore Intelligent Systems. Data is for informational purposes only.</p>
         </div>
 
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        let map, mainMarker, radiusCircle, compLayer = L.layerGroup();
+        let map, mainMarker, radiusCircle;
+        let compLayer = L.layerGroup();
 
-        // Init Map with a Darker/Professional Tile Style
+        // 1. Initialize Map (Cleaner Look)
         document.addEventListener('DOMContentLoaded', () => {
             map = L.map('map').setView([53.5461, -113.4938], 11);
-            // CartoDB Voyager Tiles (Cleaner, more business-like than standard OSM)
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            // CartoDB Positron Tiles (Clean, Professional, Greyscale)
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; OpenStreetMap &copy; CARTO',
                 maxZoom: 19
             }).addTo(map);
             compLayer.addTo(map);
         });
 
         async function analyzeLocation() {
-            const btn = document.querySelector('.btn-analyze');
-            const originalText = btn.innerText;
-            btn.innerText = "PROCESSING...";
-            btn.disabled = true;
-
             const addr = document.getElementById('addressInput').value;
-            
+            const loader = document.getElementById('loader');
+            loader.style.display = 'flex';
+
             try {
-                // Using the backend you already have (app.py)
+                // Call Backend
                 const res = await fetch('/analyze', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ address: addr })
                 });
-                
                 const data = await res.json();
-                
-                // --- 1. POPULATE METRICS ---
-                document.getElementById('resScore').innerText = data.fit.score;
+
+                // 2. Update Metrics with Animation
+                animateValue("resScore", 0, data.fit.score, 1000);
+                document.getElementById('resStatus').innerText = data.fit.status;
                 document.getElementById('resInc').innerText = "$" + data.demo.inc.toLocaleString();
-                document.getElementById('resCap').innerText = "8.5%"; // Hardcoded for demo/MVP
+                document.getElementById('resCap').innerText = "8.5%"; // Demo Logic
 
-                // Score Color Logic
-                const circle = document.getElementById('resScore');
-                if(data.fit.score >= 80) circle.style.background = "#10b981"; // Green
-                else if(data.fit.score >= 60) circle.style.background = "#f59e0b"; // Orange
-                else circle.style.background = "#ef4444"; // Red
-
-                // --- 2. MAP UPDATE ---
+                // 3. Map Logic
                 const lat = data.loc.lat || 53.5285;
                 const lng = data.loc.lng || -114.0107;
                 
                 map.setView([lat, lng], 14);
-                
+                compLayer.clearLayers();
                 if(mainMarker) map.removeLayer(mainMarker);
                 if(radiusCircle) map.removeLayer(radiusCircle);
-                compLayer.clearLayers();
 
-                // Main Site Pin (Blue Pulse)
+                // Site Pin (Blue)
                 mainMarker = L.marker([lat, lng]).addTo(map).bindPopup("<b>Subject Site</b>").openPopup();
                 radiusCircle = L.circle([lat, lng], { radius: 3000, color: '#2563eb', fillOpacity: 0.05 }).addTo(map);
 
-                // --- 3. COMPETITOR LIST & PINS ---
+                // 4. Competitors
                 const list = document.getElementById('resRadar');
                 list.innerHTML = '';
                 
-                if(data.radar.list.length === 0) {
-                     list.innerHTML = '<div class="text-center text-muted py-3">No immediate competitors found.</div>';
-                     document.getElementById('aiInsight').innerText = "Market Void Detected. High potential for entry.";
+                if (data.radar.list.length === 0) {
+                    list.innerHTML = '<div class="p-4 text-center text-muted">No direct competitors found (Market Void).</div>';
                 } else {
-                    document.getElementById('aiInsight').innerText = "Moderate competition density. Demographics support additional capacity.";
-                    
                     data.radar.list.forEach(item => {
-                        // Add to Sidebar List
+                        // Add to list
                         list.innerHTML += `
-                        <div class="comp-item">
+                        <div class="radar-item">
                             <div>
-                                <div class="comp-name">${item.name}</div>
-                                <div class="comp-type">${item.type}</div>
+                                <div class="fw-bold text-dark">${item.name}</div>
+                                <div class="small text-muted">${item.type}</div>
                             </div>
                             <span class="badge bg-light text-dark border">${item.dist}</span>
                         </div>`;
 
-                        // Add to Map (Red Dots)
+                        // Add to map (Red Dot)
                         if(item.lat && item.lng) {
                             L.circleMarker([item.lat, item.lng], {
-                                radius: 6,
-                                fillColor: "#ef4444",
-                                color: "#fff",
-                                weight: 2,
-                                opacity: 1,
-                                fillOpacity: 0.8
-                            }).bindPopup(`<b>${item.name}</b><br>${item.dist}`).addTo(compLayer);
+                                radius: 6, fillColor: '#ef4444', color: 'white', weight: 1, fillOpacity: 1
+                            }).addTo(compLayer).bindPopup(item.name);
                         }
                     });
                 }
 
             } catch (e) {
-                alert("System Alert: Data connection interrupted. Please try again.");
+                alert("Demo Connection Error: Please try again.");
             } finally {
-                btn.innerText = originalText;
-                btn.disabled = false;
+                loader.style.display = 'none';
             }
         }
 
+        // Helper: Number Counter Animation
+        function animateValue(id, start, end, duration) {
+            let obj = document.getElementById(id);
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                obj.innerHTML = Math.floor(progress * (end - start) + start);
+                if (progress < 1) window.requestAnimationFrame(step);
+            };
+            window.requestAnimationFrame(step);
+        }
+
         function downloadPDF() {
-            const element = document.getElementById('dashboardArea');
-            const opt = {
+            const el = document.getElementById('printArea');
+            // Hide Search Bar for PDF
+            document.querySelector('.data-input').style.display = 'none';
+            document.querySelector('.pdf-header').style.display = 'block';
+            
+            html2pdf().set({
                 margin: 0.5,
                 filename: 'ContextCore_Brief.pdf',
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2 },
                 jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
-            };
-            
-            // Toggle visibility for print
-            document.querySelector('.no-print').style.display = 'none';
-            document.querySelector('.pdf-only').style.display = 'block';
-
-            html2pdf().set(opt).from(element).save().then(() => {
-                document.querySelector('.no-print').style.display = 'block';
-                document.querySelector('.pdf-only').style.display = 'none';
+            }).from(el).save().then(() => {
+                // Restore
+                document.querySelector('.data-input').style.display = 'block';
+                document.querySelector('.pdf-header').style.display = 'none';
             });
         }
     </script>
