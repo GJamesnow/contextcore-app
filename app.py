@@ -1,126 +1,140 @@
 import os
-from flask import Flask, jsonify, request, send_from_directory
+import requests
+from flask import Flask, jsonify, request
 from flask_cors import CORS
-from flask_sqlalchemy import SQLAlchemy
+from flask_sqlalchemy import SQLAlchemy # Keep this, even if not fully used yet
 
+# --- APP SETUP ---
 app = Flask(__name__)
 CORS(app)
 
-# --- DATABASE CONFIGURATION ---
-# This connects to the Render PostgreSQL database
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///local.db')
+# Use SQLite for safety/self-healing, even if we move to Postgres later
+try:
+    os.makedirs(app.instance_path)
+except OSError:
+    pass
+
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(app.instance_path, 'contextcore_v3.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-# --- DATABASE MODELS ---
+# --- CONFIGURATION & FALLBACK DATA ---
+GOOGLE_API_KEY = os.environ.get('GOOGLE_API_KEY')
+
+# Define a simple "Market" model just to hold the self-healing data
 class Market(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    lookup_key = db.Column(db.String(50), unique=True) # e.g. "stony", "whyte"
+    lookup_key = db.Column(db.String(50), unique=True)
     name = db.Column(db.String(100))
     population = db.Column(db.Integer)
     avg_income = db.Column(db.Integer)
     score = db.Column(db.Integer)
-    status = db.Column(db.String(50))
-    # We store competitors as a simple pipe-separated string for MVP simplicity
-    # e.g. "Freson Bros|Grocery|0.2 km,Tim Hortons|Coffee|0.4 km"
-    competitors_raw = db.Column(db.Text)
+    lat = db.Column(db.Float)
+    lng = db.Column(db.Float)
 
-# Create tables within the application context
-with app.app_context():
-    db.create_all()
+# Self-Healing Function (Ensures a fallback exists)
+def seed_database_internal():
+    # Only create tables if they don't exist
+    with app.app_context():
+        db.create_all()
+        if Market.query.first(): 
+            return # Already seeded
+        
+        # Hardcoded demo data (Stony Plain)
+        stony = Market(
+            lookup_key='stony',
+            name="Stony Plain (Growth)",
+            population=24000,
+            avg_income=125000,
+            score=88,
+            lat=53.5285, lng=-114.0107
+        )
+        
+        # Competitors (Required for the frontend list)
+        global STONY_COMPETITORS
+        STONY_COMPETITORS = [
+            {"name": "Freson Bros", "type": "Grocery", "dist": "0.4km", "lat": 53.5290, "lng": -114.0120},
+            {"name": "Tim Hortons", "type": "Coffee", "dist": "0.6km", "lat": 53.5265, "lng": -114.0040},
+            {"name": "Rexall", "type": "Pharmacy", "dist": "0.8km", "lat": 53.5300, "lng": -114.0150},
+        ]
+        
+        db.session.add(stony)
+        db.session.commit()
+        print("--- DATABASE AUTO-SEEDED with fallback data ---")
 
 # --- ROUTES ---
 
 @app.route('/')
 def home():
-    return send_from_directory('.', 'dashboard.html')
+    return app.send_static_file('dashboard.html') # Serve the UI
 
 @app.route('/analyze', methods=['POST'])
 def analyze():
+    # Crucial Step: Run self-healing before every request to ensure data exists
+    seed_database_internal() 
+    
     data = request.json
-    # Simple logic to find the keyword in the address
-    addr = data.get('address', '').lower()
+    address = data.get('address', '').lower()
     
-    # Default match
-    market_data = Market.query.filter_by(lookup_key='default').first()
+    # --- 1. LIVE DATA ATTEMPT ---
+    # Try to connect to Google if the key exists
+    if GOOGLE_API_KEY and address and address != '4300 south park dr, stony plain':
+        try:
+            # 1a. GEOCODING 
+            geo_url = f"https://maps.googleapis.com/maps/api/geocode/json?address={address}&key={GOOGLE_API_KEY}"
+            geo_res = requests.get(geo_url).json()
+            
+            if geo_res.get('results'):
+                location = geo_res['results'][0]['geometry']['location']
+                lat, lng = location['lat'], location['lng']
+                
+                # 1b. COMPETITOR SCAN 
+                places_url = f"https://maps.googleapis.com/maps/api/place/nearbysearch/json?location={lat},{lng}&radius=2000&type=store&keyword=coffee|grocery|restaurant&key={GOOGLE_API_KEY}"
+                places_res = requests.get(places_url).json()
+                
+                competitors = []
+                for place in places_res.get('results', [])[:6]: 
+                    competitors.append({
+                        "name": place.get('name'),
+                        "type": place.get('types')[0].replace('_', ' ').title(),
+                        "dist": "Live Scan",
+                        "lat": place['geometry']['location']['lat'],
+                        "lng": place['geometry']['location']['lng']
+                    })
+                
+                # Successfully pulled live data. Return it.
+                return jsonify({
+                    "loc": { "lat": lat, "lng": lng, "address": address },
+                    "fit": { "score": max(10, 100 - (len(competitors) * 5)), "status": "Live Analysis" },
+                    "demo": { "inc": 110000, "pop": 20000 },
+                    "radar": { "list": competitors }
+                })
+        except Exception as e:
+            # If Google API call fails for any reason (timeout, quota, error)
+            print(f"Google API call failed: {e}. Falling back to seeded data.")
+            pass # Continue to the fallback logic below
     
-    # Try to find a specific match
-    if "stony" in addr or "4300" in addr:
-        found = Market.query.filter_by(lookup_key='stony').first()
-        if found: market_data = found
-    elif "leduc" in addr:
-        found = Market.query.filter_by(lookup_key='leduc').first()
-        if found: market_data = found
-        
-    # Format competitors from the raw string
-    radar_list = []
-    if market_data and market_data.competitors_raw:
-        for comp in market_data.competitors_raw.split(','):
-            parts = comp.split('|')
-            if len(parts) == 3:
-                radar_list.append({"name": parts[0], "type": parts[1], "dist": parts[2]})
+    # --- 2. FALLBACK (Guaranteed Data for Demo) ---
+    # If the live data attempt failed, or the user is using the demo address, use the seeded data.
+    stony_data = Market.query.filter_by(lookup_key='stony').first()
+    
+    if stony_data:
+        return jsonify({
+            "loc": { "lat": stony_data.lat, "lng": stony_data.lng, "address": stony_data.name },
+            "fit": { "score": stony_data.score, "status": "Seeded Data" },
+            "demo": { "inc": stony_data.avg_income, "pop": stony_data.population },
+            "radar": { "list": STONY_COMPETITORS if 'STONY_COMPETITORS' in globals() else [] }
+        })
+    else:
+        # ABSOLUTE FAILURE: Should not happen with self-healing, but catches any other error.
+        return jsonify({"error": "No data available in the database."}), 500
 
-    # Fallback if DB is empty
-    if not market_data:
-        return jsonify({"error": "No data found. Did you run /seed?"}), 500
-
-    return jsonify({
-        "loc": {"address": addr.title()},
-        "demo": {
-            "pop": market_data.population, 
-            "inc": market_data.avg_income, 
-            "market": market_data.name
-        },
-        "radar": {"list": radar_list, "radius": 3.0},
-        "fit": {
-            "score": market_data.score, 
-            "status": market_data.status, 
-            "notes": ["Database Record Loaded"]
-        }
-    })
-
-# --- SEED ROUTE (RUN THIS ONCE) ---
-@app.route('/seed')
-def seed_data():
-    # Clear existing data to avoid duplicates
-    db.session.query(Market).delete()
-    
-    # 1. Stony Plain
-    stony = Market(
-        lookup_key='stony',
-        name="Stony Plain (Growth)",
-        population=18000,
-        avg_income=118000,
-        score=82,
-        status="Strong Opportunity",
-        competitors_raw="Freson Bros|Grocery|0.2 km,Tim Hortons|Coffee|0.4 km"
-    )
-    
-    # 2. Leduc
-    leduc = Market(
-        lookup_key='leduc',
-        name="Leduc Common",
-        population=36000,
-        avg_income=98000,
-        score=75,
-        status="Moderate Growth",
-        competitors_raw="Canadian Tire|Big Box|0.5 km,Walmart|Big Box|0.7 km"
-    )
-    
-    # 3. Default
-    default = Market(
-        lookup_key='default',
-        name="General Market Area",
-        population=50000,
-        avg_income=80000,
-        score=60,
-        status="Review Needed",
-        competitors_raw="Generic Store|Retail|1.0 km"
-    )
-    
-    db.session.add_all([stony, leduc, default])
-    db.session.commit()
-    return "Database seeded successfully! You can now use the app."
+# --- DEPLOYMENT STARTUP ---
+# Create the initial database structure upon app startup
+with app.app_context():
+    seed_database_internal()
 
 if __name__ == '__main__':
-    app.run()
+    # Use the appropriate server startup method for the environment
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
