@@ -3,64 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ContextCore | Market Intelligence</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>ContextCore | Command Center</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
-        /* === UI FIXES & ENHANCEMENTS === */
+        /* --- UI STYLING --- */
         :root {
-            --bg-body: #f9fafb;
-            --bg-nav: #111827; /* Dark Header/Sidebar */
-            --primary: #2563eb; 
-            --accent-green: #10b981;
+            --bg-app: #f3f4f6;
+            --sidebar-width: 260px;
+            --bg-sidebar: #111827; /* Dark Slate */
+            --primary: #1e40af; /* Deep Corporate Blue */
+            --accent: #10b981;  /* Success Green */
             --text-dark: #111827;
-            --text-muted: #6b7280;
+            --text-gray: #6b7280;
         }
 
-        body { 
-            background-color: var(--bg-body); 
-            font-family: 'Inter', sans-serif; 
-            color: var(--text-dark);
-        }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-app); color: var(--text-dark); overflow-x: hidden; }
+
+        .app-wrapper { display: flex; min-height: 100vh; }
         
-        /* FIX: Ensure the main content is laid out correctly */
-        .app-wrapper {
-            display: flex;
-            min-height: 100vh;
-        }
-
-        /* SIDEBAR/HEADER (Command Bar) */
+        /* Fixed Sidebar */
         .sidebar {
-            width: 260px;
-            background: var(--bg-nav);
+            width: var(--sidebar-width);
+            background: var(--bg-sidebar);
             color: white;
             padding: 1.5rem;
-            position: fixed;
-            height: 100vh;
+            position: fixed; height: 100vh;
+            display: flex; flex-direction: column;
         }
-        .brand-logo { 
-            color: white !important; 
-            font-weight: 700; 
-            letter-spacing: -0.5px; 
-            font-size: 1.25rem; 
-            display: flex; 
-            align-items: center; 
-            gap: 10px;
-            margin-bottom: 2rem;
-        }
-        .brand-logo span { background: var(--primary); padding: 2px 8px; border-radius: 4px; }
+        .brand { font-weight: 700; font-size: 1.25rem; letter-spacing: -0.5px; margin-bottom: 2rem; display: flex; align-items: center; gap: 10px; }
+        .brand span { background: var(--primary); padding: 2px 8px; border-radius: 4px; }
+        
+        .nav-item { padding: 0.75rem 1rem; border-radius: 8px; color: #9ca3af; cursor: pointer; margin-bottom: 0.25rem; transition: 0.2s; display: flex; align-items: center; gap: 10px; }
+        .nav-item:hover, .nav-item.active { background: #1f2937; color: white; }
+        .nav-item.active { border-left: 3px solid var(--accent); }
         
         .main-content {
-            margin-left: 260px; /* Offset for sidebar */
+            margin-left: var(--sidebar-width);
             flex: 1;
             padding: 2rem;
         }
-
-        /* --- New Data Capture Bar --- */
+        
+        /* Search Bar */
         .search-container {
             background: white; padding: 1rem; border-radius: 12px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
@@ -74,33 +62,29 @@
             background-color: #f9fafb;
             cursor: pointer;
         }
-        .btn-analyze {
-            background: var(--primary); color: white; border: none;
-            padding: 0.6rem 2rem; border-radius: 8px; font-weight: 600;
-        }
-        
-        /* --- Metric Cards --- */
+
+        /* Metric Cards */
         .kpi-card {
             background: white; padding: 1.25rem; border-radius: 12px;
             border: 1px solid #e5e7eb;
             box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-            transition: transform 0.2s;
         }
-        .kpi-label { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem; }
+        .kpi-label { font-size: 0.75rem; font-weight: 600; color: var(--text-gray); text-transform: uppercase; margin-bottom: 0.5rem; }
         .kpi-value { font-size: 1.75rem; font-weight: 700; color: var(--text-dark); letter-spacing: -0.5px; }
 
-        /* --- Map & Sidebar --- */
+        /* Map & Panels */
         .split-view { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; }
         .panel { background: white; border-radius: 12px; border: 1px solid #e5e7eb; overflow: hidden; }
-        .panel-header { padding: 1rem; border-bottom: 1px solid #f3f4f6; display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 0.9rem; }
+        .panel-header { padding: 1rem; border-bottom: 1px solid #f3f4f6; font-weight: 600; font-size: 0.9rem; }
         #map { height: 450px; width: 100%; }
-        
-        .competitor-list { padding: 0; margin: 0; list-style: none; overflow-y: auto; height: 400px; }
-        .comp-item { padding: 1rem; border-bottom: 1px solid #f3f4f6; display: flex; justify-content: space-between; align-items: center; }
 
-        /* Lock feature style */
-        .locked-feature { filter: blur(2px); pointer-events: none; user-select: none; }
+        .comp-item { padding: 1rem; border-bottom: 1px solid #f3f4f6; display: flex; justify-content: space-between; align-items: center; }
+        
         .lock-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.6); z-index: 10; font-weight: 600; color: #4b5563; }
+        
+        /* PDF Fixes */
+        .no-print { display: flex; } /* FIX: ensures they are visible by default */
+        .pdf-header { display: none; text-align: center; margin-bottom: 2rem; border-bottom: 2px solid #000; padding-bottom: 1rem; }
     </style>
 </head>
 <body>
@@ -122,15 +106,21 @@
             </nav>
 
             <div class="user-profile" style="margin-top: auto; padding-top: 1rem; border-top: 1px solid #374151;">
-                <div class="text-muted small">Guest Mode</div>
+                <div class="text-muted small">Guest Broker | Free Plan</div>
             </div>
         </aside>
 
         <main class="main-content" id="printArea">
             
             <div class="pdf-header">
-                <h1>Investment Investment Brief</h1>
+                <h1>Investment Viability Report</h1>
             </div>
+            
+            <div class="d-flex justify-content-between align-items-center mb-4 no-print" style="border-bottom: 1px solid #e5e7eb; padding-bottom: 1rem;">
+                <h4 class="fw-bold m-0">New Analysis</h4>
+                <button class="btn btn-primary btn-sm" onclick="downloadPDF()"><i class="bi bi-download me-2"></i>Export Brief</button>
+            </div>
+
 
             <div class="search-container no-print">
                 <i class="bi bi-search text-muted ms-2"></i>
@@ -216,7 +206,7 @@
             const loader = document.getElementById('loader');
             const addr = document.getElementById('addressInput').value;
             const dealType = document.getElementById('dealType').value;
-            const assetClass = document.getElementById('assetClass').value; // Capturing Asset Class
+            const assetClass = document.getElementById('assetClass').value; 
 
             if(addr.length < 5) { alert("Please enter a valid address."); return; }
             if(!dealType || !assetClass) { alert("Please select Deal Type and Asset Class."); return; }
@@ -274,12 +264,6 @@
                     });
                 }
                 
-                // Intent Trigger: Log or show specialized tool based on Deal Type
-                if (dealType === 'lease') {
-                    console.log(`Intent Captured: LEASING for ${assetClass}. Trigger Void Analysis upsell.`);
-                    // You would replace this with code to show a leasing-specific tool.
-                }
-
             } catch (e) {
                 alert("Error connecting to database. Please try again.");
             } finally {
