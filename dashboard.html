@@ -190,7 +190,7 @@
             map = L.map('map').setView([53.5461, -113.4938], 11);
             
             // --- CRITICAL FIX 1: Allow Cross-Origin (Anonymous) Images ---
-            // This is required for html2pdf to see the map tiles as "safe" to print
+            // This allows the browser to trust the map tiles for the screenshot
             L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { 
                 attribution: '&copy; CARTO',
                 crossOrigin: 'anonymous' 
