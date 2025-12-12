@@ -3,65 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ContextCore | Command Center</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>ContextCore | Market Intelligence</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
+        /* === UI FIXES & ENHANCEMENTS === */
         :root {
-            --bg-app: #f3f4f6;
-            --sidebar-width: 260px;
-            --primary: #1e40af; /* Deep Corporate Blue */
-            --accent: #10b981;  /* Success Green */
+            --bg-body: #f9fafb;
+            --bg-nav: #111827; /* Dark Header/Sidebar */
+            --primary: #2563eb; 
+            --accent-green: #10b981;
             --text-dark: #111827;
-            --text-gray: #6b7280;
+            --text-muted: #6b7280;
         }
 
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg-app); color: var(--text-dark); overflow-x: hidden; }
-
-        /* --- Layout: Sidebar + Main Content --- */
-        .app-wrapper { display: flex; min-height: 100vh; }
+        body { 
+            background-color: var(--bg-body); 
+            font-family: 'Inter', sans-serif; 
+            color: var(--text-dark);
+        }
         
+        /* FIX: Ensure the main content is laid out correctly */
+        .app-wrapper {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* SIDEBAR/HEADER (Command Bar) */
         .sidebar {
-            width: var(--sidebar-width);
-            background: #111827;
+            width: 260px;
+            background: var(--bg-nav);
             color: white;
             padding: 1.5rem;
-            display: flex; flex-direction: column;
-            position: fixed; height: 100vh;
+            position: fixed;
+            height: 100vh;
         }
+        .brand-logo { 
+            color: white !important; 
+            font-weight: 700; 
+            letter-spacing: -0.5px; 
+            font-size: 1.25rem; 
+            display: flex; 
+            align-items: center; 
+            gap: 10px;
+            margin-bottom: 2rem;
+        }
+        .brand-logo span { background: var(--primary); padding: 2px 8px; border-radius: 4px; }
         
         .main-content {
-            margin-left: var(--sidebar-width);
+            margin-left: 260px; /* Offset for sidebar */
             flex: 1;
             padding: 2rem;
         }
 
-        /* --- Sidebar Elements --- */
-        .brand { font-weight: 700; font-size: 1.25rem; letter-spacing: -0.5px; margin-bottom: 2rem; display: flex; align-items: center; gap: 10px; }
-        .brand span { background: var(--primary); padding: 2px 8px; border-radius: 4px; }
-        
-        .nav-item { padding: 0.75rem 1rem; border-radius: 8px; color: #9ca3af; cursor: pointer; margin-bottom: 0.25rem; transition: 0.2s; display: flex; align-items: center; gap: 10px; }
-        .nav-item:hover, .nav-item.active { background: #1f2937; color: white; }
-        .nav-item.active { border-left: 3px solid var(--accent); }
-        
-        .user-profile { margin-top: auto; padding-top: 1rem; border-top: 1px solid #374151; display: flex; align-items: center; gap: 10px; }
-        .avatar { width: 32px; height: 32px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; }
-
-        /* --- Search & Capture Bar (The Profit Engine) --- */
+        /* --- New Data Capture Bar --- */
         .search-container {
             background: white; padding: 1rem; border-radius: 12px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             display: flex; gap: 10px; align-items: center;
             margin-bottom: 2rem;
         }
-        .input-group-text { background: white; border-right: none; color: var(--text-gray); }
-        .form-control { border-left: none; box-shadow: none; }
-        .form-control:focus { border-color: #dee2e6; }
-        
         .form-select-custom {
             border: 1px solid #e5e7eb; border-radius: 8px;
             padding: 0.5rem 2rem 0.5rem 1rem;
@@ -69,49 +74,33 @@
             background-color: #f9fafb;
             cursor: pointer;
         }
-
         .btn-analyze {
             background: var(--primary); color: white; border: none;
             padding: 0.6rem 2rem; border-radius: 8px; font-weight: 600;
         }
-        .btn-analyze:hover { background: #1e3a8a; }
-
-        /* --- Intelligence Dashboard --- */
-        .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-bottom: 1.5rem; }
         
+        /* --- Metric Cards --- */
         .kpi-card {
             background: white; padding: 1.25rem; border-radius: 12px;
             border: 1px solid #e5e7eb;
             box-shadow: 0 1px 2px rgba(0,0,0,0.05);
             transition: transform 0.2s;
         }
-        .kpi-card:hover { transform: translateY(-2px); }
-        
-        .kpi-label { font-size: 0.75rem; font-weight: 600; color: var(--text-gray); text-transform: uppercase; margin-bottom: 0.5rem; }
+        .kpi-label { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem; }
         .kpi-value { font-size: 1.75rem; font-weight: 700; color: var(--text-dark); letter-spacing: -0.5px; }
-        .kpi-trend { font-size: 0.85rem; font-weight: 500; margin-top: 0.25rem; display: flex; align-items: center; gap: 4px; }
-        .trend-up { color: var(--accent); }
 
-        /* --- Map & Deep Dive --- */
+        /* --- Map & Sidebar --- */
         .split-view { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; }
-        
-        .panel { background: white; border-radius: 12px; border: 1px solid #e5e7eb; overflow: hidden; height: 100%; display: flex; flex-direction: column; }
+        .panel { background: white; border-radius: 12px; border: 1px solid #e5e7eb; overflow: hidden; }
         .panel-header { padding: 1rem; border-bottom: 1px solid #f3f4f6; display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 0.9rem; }
-        
         #map { height: 450px; width: 100%; }
         
         .competitor-list { padding: 0; margin: 0; list-style: none; overflow-y: auto; height: 400px; }
         .comp-item { padding: 1rem; border-bottom: 1px solid #f3f4f6; display: flex; justify-content: space-between; align-items: center; }
-        .comp-item:last-child { border-bottom: none; }
-        
-        /* --- Overlay & PDF --- */
-        .loader-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.95); z-index: 9999; display: none; align-items: center; justify-content: center; flex-direction: column; }
-        .pdf-header { display: none; text-align: center; margin-bottom: 2rem; border-bottom: 2px solid #000; padding-bottom: 1rem; }
-        
-        /* Locked Feature Style */
-        .locked-feature { filter: blur(4px); pointer-events: none; user-select: none; }
-        .lock-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.6); z-index: 10; font-weight: 600; color: #4b5563; }
 
+        /* Lock feature style */
+        .locked-feature { filter: blur(2px); pointer-events: none; user-select: none; }
+        .lock-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.6); z-index: 10; font-weight: 600; color: #4b5563; }
     </style>
 </head>
 <body>
@@ -119,30 +108,21 @@
     <div class="loader-overlay" id="loader">
         <div class="spinner-border text-primary mb-3" role="status"></div>
         <div class="fw-bold text-dark">Aggregating Market Sources...</div>
-        <div class="text-muted small">Checking Permits, Demographics, and Competitors</div>
     </div>
 
     <div class="app-wrapper">
         
-        <aside class="sidebar">
-            <div class="brand"><span>C</span> ContextCore</div>
+        <aside class="sidebar no-print">
+            <div class="brand-logo"><span>C</span> ContextCore</div>
             
             <nav>
                 <div class="nav-label text-muted small fw-bold mb-2 px-3">TOOLS</div>
                 <div class="nav-item active"><i class="bi bi-grid-1x2-fill"></i> Site Analysis</div>
                 <div class="nav-item"><i class="bi bi-layers-fill"></i> Void Analysis <i class="bi bi-lock-fill ms-auto small opacity-50"></i></div>
-                <div class="nav-item"><i class="bi bi-people-fill"></i> Demographics</div>
-                
-                <div class="nav-label text-muted small fw-bold mb-2 mt-4 px-3">PROJECTS</div>
-                <div class="nav-item"><i class="bi bi-folder"></i> Saved Reports</div>
             </nav>
 
-            <div class="user-profile">
-                <div class="avatar">JM</div>
-                <div style="font-size: 0.9rem;">
-                    <div class="fw-bold">Guest Broker</div>
-                    <div class="text-muted small">Free Plan</div>
-                </div>
+            <div class="user-profile" style="margin-top: auto; padding-top: 1rem; border-top: 1px solid #374151;">
+                <div class="text-muted small">Guest Mode</div>
             </div>
         </aside>
 
@@ -150,16 +130,10 @@
             
             <div class="pdf-header">
                 <h1>Investment Investment Brief</h1>
-                <p>CONFIDENTIAL • GENERATED BY CONTEXTCORE</p>
-            </div>
-
-            <div class="d-flex justify-content-between align-items-center mb-4 no-print">
-                <h4 class="fw-bold m-0">New Analysis</h4>
-                <button class="btn btn-outline-dark btn-sm" onclick="downloadPDF()"><i class="bi bi-download me-2"></i>Export Brief</button>
             </div>
 
             <div class="search-container no-print">
-                <i class="bi bi-geo-alt text-muted ms-2"></i>
+                <i class="bi bi-search text-muted ms-2"></i>
                 <input type="text" class="form-control" id="addressInput" placeholder="Enter Site Address (e.g. 4300 South Park Dr)">
                 
                 <select class="form-select-custom" id="dealType">
@@ -180,42 +154,40 @@
             </div>
 
             <div class="metric-grid">
-                <div class="kpi-card">
-                    <div class="kpi-label">Opportunity Score</div>
-                    <div class="kpi-value text-success" id="resScore">--</div>
-                    <div class="kpi-trend trend-up"><i class="bi bi-graph-up-arrow"></i> Strong Fit</div>
+                <div class="kpi-card d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="kpi-label">Opportunity Score</div>
+                        <div class="kpi-value text-success" id="resScore">--</div>
+                    </div>
+                    <div class="score-circle">
+                         <i class="bi bi-bar-chart-fill"></i>
+                    </div>
                 </div>
                 <div class="kpi-card">
                     <div class="kpi-label">Avg HHI (3km)</div>
                     <div class="kpi-value" id="resInc">--</div>
-                    <div class="kpi-trend trend-up">Top 20% Percentile</div>
+                    <div class="kpi-trend text-muted small">Top 20% Percentile</div>
                 </div>
                 <div class="kpi-card">
                     <div class="kpi-label">Est. Cap Rate</div>
                     <div class="kpi-value text-primary" id="resCap">--</div>
-                    <div class="kpi-trend text-muted">Market Average</div>
+                    <div class="kpi-trend text-muted small">Based on Market Rents</div>
                 </div>
-                <div class="kpi-card position-relative overflow-hidden">
-                    <div class="kpi-label">Projected Rent</div>
+                <div class="kpi-card position-relative">
+                    <div class="kpi-label">Projected Rent (SQ/FT)</div>
                     <div class="kpi-value locked-feature">$32.50</div>
-                    <div class="lock-overlay"><i class="bi bi-lock-fill me-1"></i> PRO</div>
+                    <div class="lock-overlay small fw-bold">PRO FEATURE</div>
                 </div>
             </div>
 
             <div class="split-view">
                 <div class="panel">
-                    <div class="panel-header">
-                        <span>Spatial Analysis</span>
-                        <span class="badge bg-light text-dark border">Radius: 3.0 km</span>
-                    </div>
+                    <div class="panel-header">Spatial Analysis</div>
                     <div id="map"></div>
                 </div>
 
                 <div class="panel">
-                    <div class="panel-header">
-                        <span>Competitive Set</span>
-                        <i class="bi bi-three-dots"></i>
-                    </div>
+                    <div class="panel-header">Competitive Set</div>
                     <div id="resRadar" class="competitor-list">
                         <div class="text-center text-muted p-5">
                             <i class="bi bi-building display-4 opacity-25"></i>
@@ -234,7 +206,6 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             map = L.map('map').setView([53.5461, -113.4938], 11);
-            // Professional "Greyscale" Tiles
             L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
                 attribution: '&copy; CARTO', maxZoom: 19
             }).addTo(map);
@@ -245,13 +216,15 @@
             const loader = document.getElementById('loader');
             const addr = document.getElementById('addressInput').value;
             const dealType = document.getElementById('dealType').value;
+            const assetClass = document.getElementById('assetClass').value; // Capturing Asset Class
 
-            // Simple Validation to force "Data Capture"
             if(addr.length < 5) { alert("Please enter a valid address."); return; }
+            if(!dealType || !assetClass) { alert("Please select Deal Type and Asset Class."); return; }
 
             loader.style.display = 'flex';
 
             try {
+                // Call Backend
                 const res = await fetch('/analyze', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
@@ -262,8 +235,8 @@
                 // UI Updates
                 document.getElementById('resScore').innerText = data.fit.score;
                 document.getElementById('resInc').innerText = "$" + data.demo.inc.toLocaleString();
-                document.getElementById('resCap').innerText = "8.5%"; // Demo Logic
-
+                document.getElementById('resCap').innerText = "8.5%"; 
+                
                 // Map Logic
                 const lat = data.loc.lat || 53.5285;
                 const lng = data.loc.lng || -114.0107;
@@ -281,7 +254,7 @@
                 list.innerHTML = '';
                 
                 if (data.radar.list.length === 0) {
-                    list.innerHTML = '<div class="p-4 text-center text-muted">Market Void Detected.<br><span class="text-success">High Opportunity.</span></div>';
+                    list.innerHTML = '<div class="text-center text-muted p-5">Market Void Detected.<br><span class="text-success">High Opportunity.</span></div>';
                 } else {
                     data.radar.list.forEach(item => {
                         list.innerHTML += `
@@ -300,14 +273,15 @@
                         }
                     });
                 }
-
-                // If they selected "Leasing", we could show a pop-up here selling Void Analysis
-                if(dealType === 'lease') {
-                    console.log("User interested in Leasing - Void Analysis opportunity");
+                
+                // Intent Trigger: Log or show specialized tool based on Deal Type
+                if (dealType === 'lease') {
+                    console.log(`Intent Captured: LEASING for ${assetClass}. Trigger Void Analysis upsell.`);
+                    // You would replace this with code to show a leasing-specific tool.
                 }
 
             } catch (e) {
-                alert("Connection Error.");
+                alert("Error connecting to database. Please try again.");
             } finally {
                 loader.style.display = 'none';
             }
@@ -328,7 +302,7 @@
             };
 
             html2pdf().set(opt).from(element).save().then(() => {
-                // Restore
+                // Restore original display settings
                 document.querySelectorAll('.no-print').forEach(el => el.style.display = 'flex');
                 document.querySelector('.pdf-header').style.display = 'none';
             });
