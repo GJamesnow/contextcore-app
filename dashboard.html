@@ -14,115 +14,39 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <style>
-        /* === THEME VARIABLES === */
+        /* [Styling remains the same for consistency] */
         :root {
             --bg-body: #f8fafc;
             --bg-sidebar: #0f172a; 
             --primary: #3b82f6;    
-            --primary-hover: #2563eb;
             --success: #10b981;
             --text-dark: #1e293b;
             --text-muted: #64748b;
             --border-color: #e2e8f0;
         }
 
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background-color: var(--bg-body); 
-            color: var(--text-dark);
-            height: 100vh;
-            overflow: hidden; 
-        }
-
-        /* === LAYOUT === */
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-body); color: var(--text-dark); height: 100vh; overflow: hidden; }
         .app-container { display: flex; height: 100vh; }
-
-        /* SIDEBAR */
-        .sidebar {
-            width: 280px;
-            background: var(--bg-sidebar);
-            color: white;
-            display: flex; flex-direction: column;
-            padding: 1.5rem;
-            flex-shrink: 0;
-            z-index: 1000;
-        }
-        .brand { 
-            font-size: 1.25rem; font-weight: 800; letter-spacing: -0.02em; 
-            display: flex; align-items: center; gap: 10px; margin-bottom: 3rem; 
-        }
+        .sidebar { width: 280px; background: var(--bg-sidebar); color: white; display: flex; flex-direction: column; padding: 1.5rem; flex-shrink: 0; z-index: 1000; }
+        .brand { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.02em; display: flex; align-items: center; gap: 10px; margin-bottom: 3rem; }
         .brand-icon { color: var(--primary); font-size: 1.4rem; }
-        
-        .nav-menu { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.5rem; }
-        .nav-item { 
-            padding: 0.75rem 1rem; border-radius: 8px; 
-            color: #94a3b8; font-weight: 500; font-size: 0.9rem; 
-            cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 12px;
-        }
-        .nav-item:hover, .nav-item.active { background: #1e293b; color: white; }
-        .nav-item.active { border-left: 3px solid var(--primary); }
-
-        .user-panel { margin-top: auto; padding-top: 1.5rem; border-top: 1px solid #1e293b; }
-
-        /* MAIN CONTENT AREA */
-        .main-content {
-            flex: 1;
-            overflow-y: auto;
-            padding: 2rem;
-            position: relative;
-        }
-
-        /* === ONBOARDING MODAL === */
-        .modal-content { border-radius: 16px; border: none; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
-        .modal-header { border-bottom: none; padding: 2rem 2rem 1rem; }
-        .modal-body { padding: 0 2rem 2rem; }
-        .feature-list { list-style: none; padding: 0; }
-        .feature-list li { margin-bottom: 1rem; display: flex; gap: 12px; align-items: start; }
-        .feature-icon { background: #eff6ff; color: var(--primary); padding: 8px; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-
-        /* === COMMAND BAR === */
-        .command-bar {
-            background: white; padding: 1rem; border-radius: 12px;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-            display: flex; gap: 1rem; align-items: center;
-            margin-bottom: 2rem; border: 1px solid var(--border-color);
-        }
-        .form-control-custom, .select-custom {
-            border: 1px solid var(--border-color); border-radius: 8px; padding: 0.75rem 1rem;
-            font-size: 0.95rem; width: 100%; transition: border-color 0.2s;
-        }
-        .form-control-custom:focus { outline: none; border-color: var(--primary); }
-        
-        .btn-action {
-            background: var(--primary); color: white; border: none;
-            padding: 0.75rem 2rem; border-radius: 8px; font-weight: 600;
-            cursor: pointer; transition: background 0.2s; white-space: nowrap;
-        }
-        .btn-action:hover { background: var(--primary-hover); }
-
-        /* === DASHBOARD CARDS === */
+        .main-content { flex: 1; overflow-y: auto; padding: 2rem; position: relative; }
+        .command-bar { background: white; padding: 1rem; border-radius: 12px; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1); display: flex; gap: 1rem; align-items: center; margin-bottom: 2rem; border: 1px solid var(--border-color); }
+        .form-control-custom, .select-custom { border: 1px solid var(--border-color); border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.95rem; width: 100%; transition: border-color 0.2s; }
+        .btn-action { background: var(--primary); color: white; border: none; padding: 0.75rem 2rem; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.2s; white-space: nowrap; }
         .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-bottom: 1.5rem; }
-        .kpi-card {
-            background: white; border-radius: 12px; padding: 1.5rem;
-            border: 1px solid var(--border-color); box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            transition: transform 0.2s; cursor: help; /* Indicates tooltip */
-        }
+        .kpi-card { background: white; border-radius: 12px; padding: 1.5rem; border: 1px solid var(--border-color); box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); cursor: help; }
         .kpi-header { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; }
         .kpi-value { font-size: 2rem; font-weight: 700; color: var(--text-dark); letter-spacing: -1px; }
-
-        /* === MAP & LIST === */
         .split-panel { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; height: 500px; }
         .content-card { background: white; border-radius: 12px; border: 1px solid var(--border-color); overflow: hidden; display: flex; flex-direction: column; }
-        .card-header { padding: 1rem; border-bottom: 1px solid var(--border-color); font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
         #map { flex: 1; width: 100%; height: 100%; background: #e5e7eb; }
-        .list-container { flex: 1; overflow-y: auto; padding: 0; }
-        .list-item { padding: 1rem; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
-
-        /* === UTILS === */
         #loader { position: fixed; inset: 0; background: rgba(255,255,255,0.95); z-index: 2000; display: none; align-items: center; justify-content: center; flex-direction: column; }
-        .blur-feature { filter: blur(4px); user-select: none; }
         .lock-badge { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 4px 12px; border-radius: 20px; border: 1px solid var(--border-color); font-size: 0.75rem; font-weight: 700; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); color: var(--text-muted); }
         .pdf-header { display: none; text-align: center; border-bottom: 2px solid #000; margin-bottom: 20px; }
+        .list-container { flex: 1; overflow-y: auto; padding: 0; }
+        .list-item { padding: 1rem; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
+        .modal-content { border-radius: 16px; border: none; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
     </style>
 </head>
 <body>
@@ -137,16 +61,16 @@
                     </div>
                 </div>
                 <div class="modal-body">
-                    <ul class="feature-list">
-                        <li>
-                            <div class="feature-icon"><i class="bi bi-lightning-fill"></i></div>
+                    <ul class="feature-list" style="list-style:none; padding:0;">
+                        <li style="margin-bottom:1rem; display:flex; gap:12px; align-items:start;">
+                            <div style="background:#eff6ff; color:var(--primary); padding:8px; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; flex-shrink:0;"><i class="bi bi-lightning-fill"></i></div>
                             <div>
                                 <div class="fw-bold">Instant Site Intelligence</div>
                                 <div class="small text-muted">Get demographics, scores, and competitors in seconds.</div>
                             </div>
                         </li>
-                        <li>
-                            <div class="feature-icon"><i class="bi bi-file-earmark-pdf-fill"></i></div>
+                        <li style="margin-bottom:1rem; display:flex; gap:12px; align-items:start;">
+                            <div style="background:#eff6ff; color:var(--primary); padding:8px; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; flex-shrink:0;"><i class="bi bi-file-earmark-pdf-fill"></i></div>
                             <div>
                                 <div class="fw-bold">Client-Ready Reports</div>
                                 <div class="small text-muted">Export professional PDF briefs with one click.</div>
@@ -178,7 +102,7 @@
             <div class="brand">
                 <i class="bi bi-c-square-fill brand-icon"></i> ContextCore
             </div>
-            <ul class="nav-menu">
+            <ul class="nav-menu" style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:0.5rem;">
                 <li class="nav-item active" data-bs-toggle="tooltip" data-bs-placement="right" title="Main Dashboard: View Score, Map, and Demographics">
                     <i class="bi bi-grid-1x2-fill"></i> Site Intelligence
                 </li>
@@ -187,7 +111,7 @@
                 </li>
                 <li class="nav-item"><i class="bi bi-bookmark-fill"></i> Saved Reports</li>
             </ul>
-            <div class="user-panel">
+            <div class="user-panel" style="margin-top:auto; padding-top:1.5rem; border-top:1px solid #1e293b;">
                 <div class="fw-bold" style="font-size:0.9rem;">Guest Broker</div>
                 <div class="text-muted" style="font-size:0.8rem;">Free Plan</div>
             </div>
@@ -297,23 +221,40 @@
             welcomeModal = new bootstrap.Modal(document.getElementById('welcomeModal'));
             welcomeModal.show();
 
-            // 3. Init Map
-            map = L.map('map').setView([53.5461, -113.4938], 11);
+            // 3. Init Map & Location Default
+            map = L.map('map').setView([53.5461, -113.4938], 11); // Default to Edmonton area
+            
+            // Attempt to get user's live location if not on localhost
+            if (location.hostname !== "localhost" && navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const userLat = position.coords.latitude;
+                        const userLng = position.coords.longitude;
+                        map.setView([userLat, userLng], 12);
+                    },
+                    (error) => {
+                        // User denied location or failed, stick to default
+                        console.log("Geolocation failed or denied. Defaulting map view.");
+                    }
+                );
+            }
+
+
             L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
                 attribution: '&copy; CARTO'
             }).addTo(map);
             compLayer.addTo(map);
         });
 
-        // "One-Click Demo" Logic
+        // "One-Click Demo" Logic (FIX: Now correctly runs analysis after filling inputs)
         function startDemo() {
             welcomeModal.hide();
-            // Pre-fill data
+            // Pre-fill data (The address remains persistent in the visible field)
             document.getElementById('addressInput').value = "4300 South Park Dr, Stony Plain";
             document.getElementById('dealType').value = "buy";
             document.getElementById('assetClass').value = "retail";
-            // Run
-            runAnalysis();
+            // Run the analysis function immediately
+            runAnalysis(); 
         }
 
         async function runAnalysis() {
@@ -323,25 +264,32 @@
             const loader = document.getElementById('loader');
 
             if(addr.length < 3) { alert("Please enter a valid address."); return; }
-            // If user manually closed modal but didn't select type, warn them
             if(!deal || !asset) { alert("Please select a Deal Type and Asset Class."); return; }
 
             // UI: Show Loader
             loader.style.display = 'flex';
+            document.getElementById('loaderText').innerText = "Connecting to Geo-Spatial Grid...";
             
             // SIMULATION (Replace with API call when backend is live)
             setTimeout(() => document.getElementById('loaderText').innerText = "Scraping Competitor Locations...", 800);
             setTimeout(() => document.getElementById('loaderText').innerText = "Calculating Demographics...", 1600);
 
             try {
-                // FETCH (Using existing backend endpoint)
+                // FETCH (Connecting to your app.py)
                 const res = await fetch('/analyze', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ address: addr })
                 });
-                const data = await res.json();
 
+                if (!res.ok) {
+                    const errorBody = await res.json().catch(() => ({ error: "Unknown Server Error (No JSON response)." }));
+                    // If the server returns a 500, we show a clean alert.
+                    alert(`Connection Error: ${errorBody.error || "Server responded with an error."}`);
+                    return; 
+                }
+                
+                const data = await res.json();
                 loader.style.display = 'none';
 
                 // Populate Data
@@ -392,7 +340,8 @@
 
             } catch (err) {
                 console.error(err);
-                alert("Connection Error. Please check your network.");
+                alert("Fatal Error: Could not reach application backend.");
+            } finally {
                 loader.style.display = 'none';
             }
         }
