@@ -3,78 +3,216 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ContextCore Dashboard</title>
+    <title>ContextCore | Broker Terminal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { font-family: sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
-        .card { border: 1px solid #ddd; padding: 1.5rem; border-radius: 8px; margin-top: 1rem; }
-        button { background: #007bff; color: white; border: none; padding: 10px 20px; cursor: pointer; }
-        button:hover { background: #0056b3; }
-        input { padding: 10px; width: 60%; margin-right: 10px; }
+        body { background-color: #f4f6f9; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        .navbar-brand { font-weight: 700; letter-spacing: -0.5px; }
+        .stat-card { background: white; border: none; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); padding: 1.5rem; height: 100%; }
+        .stat-label { font-size: 0.75rem; text-transform: uppercase; color: #6c757d; letter-spacing: 1px; font-weight: 600; margin-bottom: 0.5rem; }
+        .stat-value { font-size: 1.75rem; font-weight: 700; color: #212529; }
+        .score-badge { font-size: 2.5rem; font-weight: 800; color: #198754; }
+        .map-placeholder { background-color: #e9ecef; height: 300px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #adb5bd; }
+        .btn-primary { background-color: #0d6efd; padding: 0.6rem 2rem; font-weight: 600; }
         .hidden { display: none; }
     </style>
 </head>
 <body>
 
-    <h1>ContextCore-MVP</h1>
-    <p>Enter a location to analyze commercial viability.</p>
-
-    <div class="card">
-        <input type="text" id="addressInput" placeholder="e.g. 4300 South Park Dr, Stony Plain">
-        <button onclick="analyzeLocation()">Analyze Location</button>
-    </div>
-
-    <div id="resultsArea" class="hidden">
-        <div class="card" style="background: #f8f9fa;">
-            <h2 id="resTitle">Location Name</h2>
-            <p><strong>Market:</strong> <span id="resMarket"></span></p>
-            <p><strong>Population:</strong> <span id="resPop"></span> | <strong>Avg Income:</strong> $<span id="resInc"></span></p>
-            <p><strong>Score:</strong> <span id="resScore" style="font-weight:bold; font-size: 1.2em;"></span></p>
-            <hr>
-            <h3>Competitors Nearby</h3>
-            <ul id="resRadar"></ul>
+    <nav class="navbar navbar-light bg-white border-bottom mb-4">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="#">
+                <span class="bg-dark text-white rounded p-1 me-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">C</span>
+                ContextCore <span class="text-muted fw-normal ms-2" style="font-size: 0.8em;">BROKER TERMINAL</span>
+            </a>
+            <div class="btn-group btn-group-sm">
+                <button type="button" class="btn btn-outline-dark active">Broker</button>
+                <button type="button" class="btn btn-outline-dark">Investor</button>
+            </div>
         </div>
-    </div>
+    </nav>
+
+    <div class="container mb-5">
+        <div class="card border-0 shadow-sm p-3 mb-4">
+            <div class="row g-2">
+                <div class="col-md-9">
+                    <input type="text" class="form-control form-control-lg" id="addressInput" placeholder="Enter address (e.g. 4300 South Park Dr, Stony Plain)">
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-primary w-100 btn-lg" onclick="analyzeLocation()" id="analyzeBtn">
+                        RUN ANALYSIS
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="loadingArea" class="text-center py-5 hidden">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="text-muted mt-2">Crunching market demographics...</p>
+        </div>
+
+        <div id="resultsArea" class="hidden">
+            
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <div class="stat-card border-start border-5 border-success">
+                        <div class="stat-label">Opportunity Score</div>
+                        <div class="d-flex align-items-center justify-content-between">
+                            <span class="score-badge" id="resScore">--</span>
+                            <span class="badge bg-success bg-opacity-10 text-success px-3 py-2" id="resStatus">Strong Fit</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-label">Avg Household Income</div>
+                        <div class="stat-value" id="resInc">$0</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-label">Trade Area Pop</div>
+                        <div class="stat-value" id="resPop">0</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-label">Competition Radius</div>
+                        <div class="stat-value">3.0 km</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-8">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body p-0">
+                            <div class="map-placeholder">
+                                <div><i class="bi bi-map"></i> Interactive Map Module (Coming Soon)</div>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-white border-top-0">
+                            <h6 class="fw-bold text-uppercase small text-muted mb-3">AI Market Insights</h6>
+                            <ul class="list-unstyled" id="resNotes">
+                                </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-white fw-bold py-3">Nearby Competitors</div>
+                        <ul class="list-group list-group-flush" id="resRadar">
+                            </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-header bg-white fw-bold py-3 text-uppercase small text-muted">
+                    <i class="bi bi-calculator"></i> Investor Quick-Cap
+                </div>
+                <div class="card-body">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-4">
+                            <label class="form-label small text-muted">Asking Price ($)</label>
+                            <input type="number" class="form-control" id="calcPrice" value="1200000">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small text-muted">Est. Monthly Rent ($)</label>
+                            <input type="number" class="form-control" id="calcRent" value="8500">
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-outline-secondary w-100" onclick="calculateCap()">Recalculate</button>
+                        </div>
+                        <div class="col-md-2 text-end">
+                            <div class="small text-muted">Est. Cap Rate</div>
+                            <div class="h2 fw-bold text-primary mb-0" id="resCap">8.50%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div> </div>
 
     <script>
         async function analyzeLocation() {
             const address = document.getElementById('addressInput').value;
-            const btn = document.querySelector('button');
+            const btn = document.getElementById('analyzeBtn');
+            const loading = document.getElementById('loadingArea');
+            const results = document.getElementById('resultsArea');
             
-            btn.innerText = "Analyzing...";
+            // UI Loading State
+            btn.disabled = true;
+            loading.classList.remove('hidden');
+            results.classList.add('hidden');
             
             try {
                 const response = await fetch('/analyze', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ address: address, desc: "Retail" })
+                    body: JSON.stringify({ address: address })
                 });
                 
+                if (!response.ok) throw new Error("API Error");
+
                 const data = await response.json();
                 
-                // Update UI
-                document.getElementById('resTitle').innerText = data.loc.address;
-                document.getElementById('resMarket').innerText = data.demo.market;
+                // Update Metric Cards
+                document.getElementById('resScore').innerText = data.fit.score;
+                document.getElementById('resStatus').innerText = data.fit.status;
                 document.getElementById('resPop').innerText = data.demo.pop.toLocaleString();
-                document.getElementById('resInc').innerText = data.demo.inc.toLocaleString();
-                document.getElementById('resScore').innerText = `${data.fit.score} / 100 (${data.fit.status})`;
+                document.getElementById('resInc').innerText = "$" + data.demo.inc.toLocaleString();
                 
+                // Color Logic for Score
+                const scoreEl = document.getElementById('resScore');
+                if(data.fit.score > 80) scoreEl.style.color = "#198754"; // Green
+                else if(data.fit.score > 60) scoreEl.style.color = "#ffc107"; // Yellow
+                else scoreEl.style.color = "#dc3545"; // Red
+
                 // Update Competitor List
                 const list = document.getElementById('resRadar');
                 list.innerHTML = '';
                 data.radar.list.forEach(item => {
                     const li = document.createElement('li');
-                    li.innerText = `${item.name} (${item.type}) - ${item.dist}`;
+                    li.className = "list-group-item d-flex justify-content-between align-items-center";
+                    li.innerHTML = `
+                        <span><strong>${item.name}</strong> <small class="text-muted">(${item.type})</small></span>
+                        <span class="badge bg-light text-dark">${item.dist}</span>
+                    `;
                     list.appendChild(li);
                 });
 
-                document.getElementById('resultsArea').classList.remove('hidden');
+                // Update Insights
+                const noteList = document.getElementById('resNotes');
+                noteList.innerHTML = '';
+                if(data.demo.inc > 100000) noteList.innerHTML += `<li class="mb-2 text-success">✔ High Income Zone (Top 20%)</li>`;
+                noteList.innerHTML += `<li class="mb-2 text-success">✔ Strong Demographic Fit</li>`;
+
+                // Show Results
+                loading.classList.add('hidden');
+                results.classList.remove('hidden');
 
             } catch (err) {
-                alert("Error connecting to server.");
+                alert("Error: Could not analyze location. Ensure you seeded the DB.");
                 console.error(err);
+                loading.classList.add('hidden');
+                btn.disabled = false;
             }
             
-            btn.innerText = "Analyze Location";
+            btn.disabled = false;
+        }
+
+        // Improvement 4: Client-Side Cap Rate Logic
+        function calculateCap() {
+            const price = parseFloat(document.getElementById('calcPrice').value);
+            const rent = parseFloat(document.getElementById('calcRent').value);
+            
+            if(price > 0 && rent > 0) {
+                const annualIncome = rent * 12;
+                const capRate = (annualIncome / price) * 100;
+                document.getElementById('resCap').innerText = capRate.toFixed(2) + "%";
+            }
         }
     </script>
 </body>
