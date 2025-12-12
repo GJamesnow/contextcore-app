@@ -5,129 +5,161 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ContextCore | Broker Terminal</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    
     <style>
-        body { background-color: #f4f6f9; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        body { background-color: #f8f9fa; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #212529; }
+        .navbar { box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .navbar-brand { font-weight: 700; letter-spacing: -0.5px; }
-        .stat-card { background: white; border: none; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); padding: 1.5rem; height: 100%; }
+        
+        /* Search Area */
+        .search-container { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 2rem; }
+        
+        /* Stat Cards */
+        .stat-card { background: white; border: 1px solid #e9ecef; border-radius: 8px; padding: 1.5rem; height: 100%; transition: transform 0.2s; }
         .stat-label { font-size: 0.75rem; text-transform: uppercase; color: #6c757d; letter-spacing: 1px; font-weight: 600; margin-bottom: 0.5rem; }
         .stat-value { font-size: 1.75rem; font-weight: 700; color: #212529; }
-        .score-badge { font-size: 2.5rem; font-weight: 800; color: #198754; }
-        .map-placeholder { background-color: #e9ecef; height: 300px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #adb5bd; }
-        .btn-primary { background-color: #0d6efd; padding: 0.6rem 2rem; font-weight: 600; }
-        .hidden { display: none; }
+        .score-badge { font-size: 3rem; font-weight: 800; color: #adb5bd; line-height: 1; }
+        
+        /* Map Area */
+        .map-wrapper { height: 100%; min-height: 400px; background: white; border: 1px solid #e9ecef; border-radius: 8px; padding: 0.5rem; }
+        #map { height: 100%; width: 100%; border-radius: 4px; min-height: 400px; }
+        
+        /* Sidebar/Competitors */
+        .comp-card { background: white; border: 1px solid #e9ecef; border-radius: 8px; height: 100%; }
+        
+        .btn-primary { background-color: #0d6efd; padding: 0.6rem 2rem; font-weight: 600; border: none; }
+        .btn-primary:hover { background-color: #0b5ed7; }
+        
+        /* Utility */
+        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 1000; display: flex; justify-content: center; align-items: center; display: none; }
     </style>
 </head>
 <body>
 
-    <nav class="navbar navbar-light bg-white border-bottom mb-4">
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status"></div>
+    </div>
+
+    <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top">
         <div class="container">
             <a class="navbar-brand d-flex align-items-center" href="#">
                 <span class="bg-dark text-white rounded p-1 me-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">C</span>
                 ContextCore <span class="text-muted fw-normal ms-2" style="font-size: 0.8em;">BROKER TERMINAL</span>
             </a>
-            <div class="btn-group btn-group-sm">
-                <button type="button" class="btn btn-outline-dark active">Broker</button>
-                <button type="button" class="btn btn-outline-dark">Investor</button>
+            <div class="d-flex">
+                <button class="btn btn-outline-dark btn-sm active me-1">Broker View</button>
+                <button class="btn btn-outline-secondary btn-sm">Investor View</button>
             </div>
         </div>
     </nav>
 
-    <div class="container mb-5">
-        <div class="card border-0 shadow-sm p-3 mb-4">
+    <div class="container py-4">
+        
+        <div class="search-container">
             <div class="row g-2">
                 <div class="col-md-9">
-                    <input type="text" class="form-control form-control-lg" id="addressInput" placeholder="Enter address (e.g. 4300 South Park Dr, Stony Plain)">
+                    <input type="text" class="form-control form-control-lg border-secondary-subtle" id="addressInput" placeholder="Enter address (e.g. 4300 South Park Dr, Stony Plain)">
                 </div>
                 <div class="col-md-3">
-                    <button class="btn btn-primary w-100 btn-lg" onclick="analyzeLocation()" id="analyzeBtn">
-                        RUN ANALYSIS
+                    <button class="btn btn-primary w-100 btn-lg" onclick="analyzeLocation()">
+                        <i class="bi bi-search me-2"></i> RUN ANALYSIS
                     </button>
                 </div>
             </div>
         </div>
 
-        <div id="loadingArea" class="text-center py-5 hidden">
-            <div class="spinner-border text-primary" role="status"></div>
-            <p class="text-muted mt-2">Crunching market demographics...</p>
-        </div>
-
-        <div id="resultsArea" class="hidden">
+        <div id="dashboardGrid">
             
             <div class="row g-3 mb-4">
                 <div class="col-md-3">
-                    <div class="stat-card border-start border-5 border-success">
+                    <div class="stat-card border-start border-5 border-secondary" id="scoreCard">
                         <div class="stat-label">Opportunity Score</div>
-                        <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-end justify-content-between">
                             <span class="score-badge" id="resScore">--</span>
-                            <span class="badge bg-success bg-opacity-10 text-success px-3 py-2" id="resStatus">Strong Fit</span>
+                            <div class="text-end">
+                                <span class="badge bg-secondary" id="resStatus">Ready</span>
+                            </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="stat-card">
                         <div class="stat-label">Avg Household Income</div>
-                        <div class="stat-value" id="resInc">$0</div>
+                        <div class="stat-value" id="resInc">$ --</div>
+                        <small class="text-muted">Per Household / Yr</small>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="stat-card">
                         <div class="stat-label">Trade Area Pop</div>
-                        <div class="stat-value" id="resPop">0</div>
+                        <div class="stat-value" id="resPop">--</div>
+                        <small class="text-muted">Within 5km Radius</small>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="stat-card">
-                        <div class="stat-label">Competition Radius</div>
-                        <div class="stat-value">3.0 km</div>
+                        <div class="stat-label">Analysis Radius</div>
+                        <div class="stat-value">3.0 <span style="font-size: 1rem; color: #6c757d;">km</span></div>
+                        <small class="text-muted">Standard Drive Time</small>
                     </div>
                 </div>
             </div>
 
-            <div class="row g-3">
-                <div class="col-md-8">
-                    <div class="card border-0 shadow-sm h-100">
-                        <div class="card-body p-0">
-                            <div class="map-placeholder">
-                                <div><i class="bi bi-map"></i> Interactive Map Module (Coming Soon)</div>
-                            </div>
-                        </div>
-                        <div class="card-footer bg-white border-top-0">
-                            <h6 class="fw-bold text-uppercase small text-muted mb-3">AI Market Insights</h6>
-                            <ul class="list-unstyled" id="resNotes">
-                                </ul>
-                        </div>
+            <div class="row g-3 mb-4">
+                <div class="col-lg-8">
+                    <div class="map-wrapper">
+                        <div id="map"></div>
                     </div>
                 </div>
-
-                <div class="col-md-4">
-                    <div class="card border-0 shadow-sm h-100">
-                        <div class="card-header bg-white fw-bold py-3">Nearby Competitors</div>
+                <div class="col-lg-4">
+                    <div class="comp-card p-3">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="fw-bold m-0 text-uppercase text-muted" style="font-size: 0.8rem; letter-spacing: 1px;">Nearby Competitors</h6>
+                            <span class="badge bg-light text-dark border">Radar</span>
+                        </div>
                         <ul class="list-group list-group-flush" id="resRadar">
+                            <li class="list-group-item text-center text-muted py-4 border-0">
+                                <i>Waiting for location data...</i>
+                            </li>
+                        </ul>
+                        <div class="mt-3 pt-3 border-top">
+                            <h6 class="fw-bold m-0 text-uppercase text-muted mb-2" style="font-size: 0.8rem; letter-spacing: 1px;">AI Insights</h6>
+                            <ul class="list-unstyled small text-muted" id="resNotes">
+                                <li>&bull; Awaiting analysis input</li>
                             </ul>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="card border-0 shadow-sm mt-4">
-                <div class="card-header bg-white fw-bold py-3 text-uppercase small text-muted">
-                    <i class="bi bi-calculator"></i> Investor Quick-Cap
-                </div>
-                <div class="card-body">
-                    <div class="row g-3 align-items-end">
-                        <div class="col-md-4">
-                            <label class="form-label small text-muted">Asking Price ($)</label>
-                            <input type="number" class="form-control" id="calcPrice" value="1200000">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label small text-muted">Est. Monthly Rent ($)</label>
-                            <input type="number" class="form-control" id="calcRent" value="8500">
-                        </div>
-                        <div class="col-md-2">
-                            <button class="btn btn-outline-secondary w-100" onclick="calculateCap()">Recalculate</button>
-                        </div>
-                        <div class="col-md-2 text-end">
-                            <div class="small text-muted">Est. Cap Rate</div>
-                            <div class="h2 fw-bold text-primary mb-0" id="resCap">8.50%</div>
+            <div class="row">
+                <div class="col-12">
+                    <div class="stat-card">
+                        <div class="row align-items-center">
+                            <div class="col-md-3 border-end">
+                                <h5 class="fw-bold mb-1"><i class="bi bi-calculator me-2"></i>Quick-Cap™</h5>
+                                <p class="small text-muted m-0">Instant Investor Check</p>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small text-muted fw-bold">Asking Price</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" class="form-control fw-bold" id="calcPrice" value="1200000">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small text-muted fw-bold">Est. Monthly Rent</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" class="form-control fw-bold" id="calcRent" value="8500">
+                                </div>
+                            </div>
+                            <div class="col-md-3 text-end">
+                                <button class="btn btn-outline-primary w-100 mb-2" onclick="calculateCap()">Calculate ROI</button>
+                                <div class="h4 fw-bold text-primary m-0" id="resCap">8.50%</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -135,17 +167,29 @@
 
         </div> </div>
 
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
     <script>
+        // Global Map Variables
+        let map;
+        let mainMarker;
+        let radiusCircle;
+
+        // Initialize Map on Load (Default View: Edmonton Area)
+        document.addEventListener('DOMContentLoaded', function() {
+            map = L.map('map').setView([53.5461, -113.4938], 11);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap'
+            }).addTo(map);
+        });
+
         async function analyzeLocation() {
             const address = document.getElementById('addressInput').value;
-            const btn = document.getElementById('analyzeBtn');
-            const loading = document.getElementById('loadingArea');
-            const results = document.getElementById('resultsArea');
+            const overlay = document.getElementById('loadingOverlay');
             
-            // UI Loading State
-            btn.disabled = true;
-            loading.classList.remove('hidden');
-            results.classList.add('hidden');
+            // Show full screen loader
+            overlay.style.display = 'flex';
             
             try {
                 const response = await fetch('/analyze', {
@@ -158,56 +202,104 @@
 
                 const data = await response.json();
                 
-                // Update Metric Cards
-                document.getElementById('resScore').innerText = data.fit.score;
-                document.getElementById('resStatus').innerText = data.fit.status;
+                // --- 1. UPDATE METRICS ---
+                const scoreEl = document.getElementById('resScore');
+                const cardEl = document.getElementById('scoreCard');
+                const statusEl = document.getElementById('resStatus');
+                
+                scoreEl.innerText = data.fit.score;
+                statusEl.innerText = data.fit.status;
+                
+                // Color Logic
+                cardEl.classList.remove('border-secondary', 'border-success', 'border-warning', 'border-danger');
+                statusEl.classList.remove('bg-secondary', 'bg-success', 'bg-warning', 'bg-danger');
+                scoreEl.style.color = "#212529"; 
+
+                if(data.fit.score > 80) {
+                    cardEl.classList.add('border-success');
+                    statusEl.classList.add('bg-success');
+                    scoreEl.style.color = "#198754"; 
+                } else if(data.fit.score > 60) {
+                    cardEl.classList.add('border-warning');
+                    statusEl.classList.add('bg-warning');
+                    scoreEl.style.color = "#ffc107";
+                } else {
+                    cardEl.classList.add('border-danger');
+                    statusEl.classList.add('bg-danger');
+                    scoreEl.style.color = "#dc3545";
+                }
+
                 document.getElementById('resPop').innerText = data.demo.pop.toLocaleString();
                 document.getElementById('resInc').innerText = "$" + data.demo.inc.toLocaleString();
                 
-                // Color Logic for Score
-                const scoreEl = document.getElementById('resScore');
-                if(data.fit.score > 80) scoreEl.style.color = "#198754"; // Green
-                else if(data.fit.score > 60) scoreEl.style.color = "#ffc107"; // Yellow
-                else scoreEl.style.color = "#dc3545"; // Red
+                // --- 2. UPDATE MAP (FAILSAFE INCLUDED) ---
+                // If DB has coords, use them. If not (DB Wipe Risk), Fallback to Stony Plain Demo Coords.
+                let lat = data.loc.lat;
+                let lng = data.loc.lng;
 
-                // Update Competitor List
+                if (!lat || !lng) {
+                    console.warn("DB Missing Coords - Using Fallback");
+                    lat = 53.5285; 
+                    lng = -114.0107; // Stony Plain Default
+                }
+
+                // Move map
+                map.setView([lat, lng], 14);
+
+                // Remove old layers
+                if(mainMarker) map.removeLayer(mainMarker);
+                if(radiusCircle) map.removeLayer(radiusCircle);
+
+                // Add new marker
+                mainMarker = L.marker([lat, lng]).addTo(map)
+                    .bindPopup(`<b>${data.loc.address}</b><br>Score: ${data.fit.score}`).openPopup();
+
+                // Add 3km Radius Circle
+                radiusCircle = L.circle([lat, lng], {
+                    color: '#0d6efd',
+                    fillColor: '#0d6efd',
+                    fillOpacity: 0.1,
+                    radius: 3000 // 3km in meters
+                }).addTo(map);
+
+
+                // --- 3. UPDATE COMPETITORS ---
                 const list = document.getElementById('resRadar');
                 list.innerHTML = '';
-                data.radar.list.forEach(item => {
-                    const li = document.createElement('li');
-                    li.className = "list-group-item d-flex justify-content-between align-items-center";
-                    li.innerHTML = `
-                        <span><strong>${item.name}</strong> <small class="text-muted">(${item.type})</small></span>
-                        <span class="badge bg-light text-dark">${item.dist}</span>
-                    `;
-                    list.appendChild(li);
-                });
+                if(data.radar.list.length > 0){
+                    data.radar.list.forEach(item => {
+                        list.innerHTML += `
+                            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                <div>
+                                    <div class="fw-bold text-dark">${item.name}</div>
+                                    <div class="small text-muted">${item.type}</div>
+                                </div>
+                                <span class="badge bg-light text-dark border">${item.dist}</span>
+                            </li>
+                        `;
+                    });
+                } else {
+                    list.innerHTML = '<li class="list-group-item text-center text-muted">No competitors found nearby.</li>';
+                }
 
-                // Update Insights
+                // --- 4. UPDATE INSIGHTS ---
                 const noteList = document.getElementById('resNotes');
                 noteList.innerHTML = '';
-                if(data.demo.inc > 100000) noteList.innerHTML += `<li class="mb-2 text-success">✔ High Income Zone (Top 20%)</li>`;
-                noteList.innerHTML += `<li class="mb-2 text-success">✔ Strong Demographic Fit</li>`;
-
-                // Show Results
-                loading.classList.add('hidden');
-                results.classList.remove('hidden');
+                if(data.demo.inc > 100000) noteList.innerHTML += `<li class="mb-1 text-success"><i class="bi bi-check-circle-fill me-2"></i>High Income Zone (Top 20%)</li>`;
+                noteList.innerHTML += `<li class="mb-1 text-success"><i class="bi bi-check-circle-fill me-2"></i>Strong Demographic Fit</li>`;
 
             } catch (err) {
-                alert("Error: Could not analyze location. Ensure you seeded the DB.");
+                alert("Error: Could not analyze location. Ensure backend is running.");
                 console.error(err);
-                loading.classList.add('hidden');
-                btn.disabled = false;
+            } finally {
+                overlay.style.display = 'none';
             }
-            
-            btn.disabled = false;
         }
 
-        // Improvement 4: Client-Side Cap Rate Logic
+        // Calculator Logic
         function calculateCap() {
             const price = parseFloat(document.getElementById('calcPrice').value);
             const rent = parseFloat(document.getElementById('calcRent').value);
-            
             if(price > 0 && rent > 0) {
                 const annualIncome = rent * 12;
                 const capRate = (annualIncome / price) * 100;
