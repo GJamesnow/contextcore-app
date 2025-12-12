@@ -180,64 +180,64 @@
             compLayer.addTo(map);
         });
 
-        // --- 1. THE GUARANTEED DEMO (Bypasses Server) ---
-        function runOneClickDemo() {
-            welcomeModal.hide();
-            document.getElementById('addressInput').value = "4300 South Park Dr, Stony Plain";
-            
-            // SIMULATE LOADING
-            document.getElementById('loader').style.display = 'flex';
-            setTimeout(() => { document.getElementById('loaderText').innerText = "Scraping Competitor Locations..."; }, 800);
-            setTimeout(() => { document.getElementById('loaderText').innerText = "Calculating Demographics..."; }, 1600);
-            
-            setTimeout(() => {
-                document.getElementById('loader').style.display = 'none';
-                
-                // HARDCODED DEMO DATA (No Server Call)
-                updateUI({
-                    loc: { lat: 53.5285, lng: -114.0107 },
-                    fit: { score: 88, status: "Recommended" },
-                    demo: { inc: 125000 },
-                    radar: [
-                        { name: "Freson Bros", type: "Grocery", dist: "0.4km", lat: 53.5290, lng: -114.0120 },
-                        { name: "Tim Hortons", type: "Coffee", dist: "0.6km", lat: 53.5265, lng: -114.0040 },
-                        { name: "Rexall", type: "Pharmacy", dist: "0.8km", lat: 53.5300, lng: -114.0150 }
-                    ]
-                });
-            }, 2500);
-        }
-
-        // --- 2. REGULAR ANALYZE (Tries Server, Falls back to Demo) ---
+        // --- 1. THE GUARANTEED LIVE ANALYSIS FUNCTION ---
         async function handleAnalyzeClick() {
             const addr = document.getElementById('addressInput').value;
-            if(addr.includes("4300")) { runOneClickDemo(); return; } // Catch demo address
+            const deal = document.getElementById('dealType').value;
+            const asset = document.getElementById('assetClass').value;
+            const loader = document.getElementById('loader');
 
-            // Try Real Server
-            document.getElementById('loader').style.display = 'flex';
+            if(addr.length < 3) { alert("Please enter a valid address."); return; }
+            if(!deal || !asset) { alert("Please select Deal Type and Asset Class."); return; }
+
+            // UI: Show Loader
+            loader.style.display = 'flex';
+            document.getElementById('loaderText').innerText = "Connecting to Live Geo-Spatial API...";
+
             try {
+                // FETCH (Connecting to your now stable app.py)
                 const res = await fetch('/analyze', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ address: addr })
                 });
-                if(!res.ok) throw new Error("Server Error");
+
                 const data = await res.json();
-                document.getElementById('loader').style.display = 'none';
-                updateUI({
-                    loc: data.loc,
-                    fit: data.fit,
-                    demo: data.demo,
-                    radar: data.radar.list
-                });
-            } catch (e) {
-                // FAILOVER: If server fails, just run demo data for now so it doesn't look broken
-                // Ideally we would show an error, but for your demo purposes, we want it to work.
-                document.getElementById('loader').style.display = 'none';
-                runOneClickDemo(); 
+
+                if (!res.ok) {
+                    // Handle specific backend error messages (like API Key missing)
+                    alert(`Analysis Failed: ${data.error || "Unknown Server Error."}`);
+                    return; 
+                }
+                
+                loader.style.display = 'none';
+
+                // Populate Data
+                updateUI(data); 
+
+            } catch (err) {
+                console.error(err);
+                alert("Fatal Error: Could not communicate with the stable server.");
+            } finally {
+                loader.style.display = 'none';
             }
         }
 
-        // --- UI UPDATE UTILITY ---
+        // --- 2. THE DEMO TRIGGER ---
+        function runOneClickDemo() {
+            // If the welcome modal is still shown, close it
+            if(welcomeModal) welcomeModal.hide(); 
+            
+            // Auto-fill the inputs to show the user what to search for
+            document.getElementById('addressInput').value = "4300 South Park Dr, Stony Plain";
+            document.getElementById('dealType').value = "buy";
+            document.getElementById('assetClass').value = "retail";
+            
+            // Now call the real live analysis function
+            handleAnalyzeClick();
+        }
+
+        // --- 3. UI Update Utility ---
         function updateUI(data) {
             // Metrics
             document.getElementById('resScore').innerText = data.fit.score;
@@ -262,7 +262,7 @@
             // List
             const list = document.getElementById('resRadar');
             list.innerHTML = '';
-            data.radar.forEach(item => {
+            data.radar.list.forEach(item => {
                 list.innerHTML += `
                 <div class="list-item">
                     <div><div class="fw-bold" style="font-size:0.9rem;">${item.name}</div><div class="text-muted" style="font-size:0.75rem;">${item.type}</div></div>
