@@ -2,202 +2,80 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>ContextCore v15 | Gold Master</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ContextCore Dashboard</title>
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #0f172a; }
-        .mono { font-family: 'Roboto Mono', monospace; }
-        .card { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .card-head { color: #64748b; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.05em; }
-        .hidden { display: none !important; }
-
-        /* PROFESSIONAL PRINT STYLES */
-        @media print {
-            @page { margin: 0.5in; size: letter; }
-            body { background: white; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .no-print { display: none !important; } 
-            
-            /* Print Layout overrides */
-            .print-header { display: block !important; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
-            
-            /* Flatten cards for paper */
-            .card { border: 1px solid #ccc; box-shadow: none; break-inside: avoid; margin-bottom: 15px; border-radius: 4px; }
-            
-            /* Force Colors */
-            .bg-green-50 { background-color: #f0fdf4 !important; }
-            .text-green-700 { color: #15803d !important; }
-            .border-green-500 { border-color: #22c55e !important; }
-            .bg-slate-50 { background-color: #f8fafc !important; }
-        }
-        .print-header { display: none; }
+        body { font-family: sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+        .card { border: 1px solid #ddd; padding: 1.5rem; border-radius: 8px; margin-top: 1rem; }
+        button { background: #007bff; color: white; border: none; padding: 10px 20px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        input { padding: 10px; width: 60%; margin-right: 10px; }
+        .hidden { display: none; }
     </style>
 </head>
-<body class="p-4 max-w-5xl mx-auto">
+<body>
 
-    <div class="print-header">
-        <div class="flex justify-between items-end">
-            <div><h1 class="font-black text-3xl uppercase tracking-tighter text-slate-900">Market<br>Opportunity</h1></div>
-            <div class="text-right">
-                <div class="text-xs font-bold uppercase text-gray-500">Prepared By</div>
-                <div class="text-lg font-bold">ContextCore Intelligence</div>
-                <div class="text-xs text-gray-400" id="print-date"></div>
-            </div>
-        </div>
+    <h1>ContextCore-MVP</h1>
+    <p>Enter a location to analyze commercial viability.</p>
+
+    <div class="card">
+        <input type="text" id="addressInput" placeholder="e.g. 4300 South Park Dr, Stony Plain">
+        <button onclick="analyzeLocation()">Analyze Location</button>
     </div>
 
-    <div class="flex justify-between items-center mb-6 no-print">
-        <div class="flex items-center gap-2">
-            <div class="h-8 w-8 bg-slate-900 rounded flex items-center justify-center text-white font-bold">C</div>
-            <div><h1 class="text-lg font-bold text-slate-900">ContextCore</h1><p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Broker Terminal</p></div>
-        </div>
-        
-        <div class="flex gap-4">
-            <div class="bg-white border border-slate-300 rounded p-1 flex">
-                <button onclick="setMode('broker')" id="btn-broker" class="px-3 py-1 text-xs font-bold rounded text-slate-500 hover:bg-slate-50">Broker</button>
-                <button onclick="setMode('investor')" id="btn-investor" class="px-3 py-1 text-xs font-bold rounded bg-slate-800 text-white">Investor</button>
-            </div>
-            <button onclick="window.print()" class="bg-slate-900 text-white px-4 py-2 rounded text-xs font-bold uppercase hover:bg-black shadow-lg transition transform hover:-translate-y-0.5">
-                <i class="fas fa-file-pdf mr-2"></i> Print Report
-            </button>
-        </div>
-    </div>
-
-    <div class="card flex gap-2 items-center mb-6 no-print bg-slate-50 border-slate-300">
-        <input type="text" id="address" value="4300 South Park Dr, Stony Plain" class="w-full bg-white border border-slate-300 rounded p-2 text-sm font-semibold outline-none focus:ring-2 ring-blue-500">
-        <input type="text" id="desc" value="Luxury Coffee Shop" class="w-1/3 bg-white border border-slate-300 rounded p-2 text-sm font-semibold outline-none focus:ring-2 ring-blue-500">
-        <button onclick="runAnalysis()" class="bg-blue-600 text-white px-6 py-2 rounded text-sm font-bold shadow-sm hover:bg-blue-700">RUN</button>
-    </div>
-
-    <div id="dashboard">
-        
-        <div class="grid grid-cols-12 gap-4 mb-4">
-            <div class="col-span-12 md:col-span-4 card border-l-4 border-l-green-500 bg-green-50">
-                <div class="card-head text-green-700">Site Opportunity Score</div>
-                <div class="flex justify-between items-end">
-                    <div class="text-5xl font-black text-slate-900" id="res-score">82</div>
-                    <div class="text-sm font-bold bg-white px-2 py-1 rounded border border-green-200 text-green-700" id="res-status">Strong Fit</div>
-                </div>
-            </div>
-            
-            <div class="col-span-12 md:col-span-8 card grid grid-cols-3 divide-x divide-slate-200 p-0 overflow-hidden">
-                <div class="p-4"><div class="card-head">Avg Household Income</div><div class="text-2xl font-bold text-slate-700 mono" id="res-inc">$118,000</div></div>
-                <div class="p-4"><div class="card-head">Trade Area Pop</div><div class="text-2xl font-bold text-slate-700 mono" id="res-pop">18,000</div></div>
-                <div class="p-4"><div class="card-head">Competition Radius</div><div class="text-2xl font-bold text-slate-700 mono" id="res-radius">3.0 km</div></div>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-12 gap-4">
-            
-            <div class="col-span-12 md:col-span-8 space-y-4">
-                <div class="card p-0 h-80 relative border-2 border-slate-900 overflow-hidden">
-                    <div class="absolute top-0 left-0 bg-white border-b-2 border-r-2 border-slate-900 px-3 py-1 text-xs font-bold z-10" id="res-address">4300 South Park Dr, Stony Plain</div>
-                    <div id="mapContainer" class="w-full h-full bg-slate-100">
-                        <iframe width="100%" height="100%" frameborder="0" style="border:0" src="https://maps.google.com/maps?q=4300+South+Park+Dr+Stony+Plain&t=&z=13&ie=UTF8&iwloc=&output=embed" allowfullscreen></iframe>
-                    </div>
-                </div>
-                
-                <div id="panel-finance" class="card bg-slate-50">
-                    <div class="card-head"><i class="fas fa-calculator mr-1"></i> Investor Quick-Cap</div>
-                    <div class="grid grid-cols-3 gap-4 items-end">
-                        <div><label class="text-[10px] font-bold uppercase text-slate-500">Price</label><input type="number" id="calc-price" value="1200000" class="w-full border p-1 font-mono text-sm rounded"></div>
-                        <div><label class="text-[10px] font-bold uppercase text-slate-500">Rent (Mo)</label><input type="number" id="calc-rent" value="8500" class="w-full border p-1 font-mono text-sm rounded"></div>
-                        <div class="text-right"><div class="text-xl font-bold text-slate-900 mono" id="calc-result">5.53%</div><div class="text-[10px] text-slate-400">Est. Cap Rate</div></div>
-                    </div>
-                    <div class="no-print mt-2"><button onclick="calcReturns()" class="text-[10px] font-bold text-blue-600 hover:underline">Recalculate</button></div>
-                </div>
-            </div>
-
-            <div class="col-span-12 md:col-span-4 space-y-4">
-                <div class="card">
-                    <div class="card-head">AI Market Insights</div>
-                    <ul id="res-notes" class="space-y-2 text-sm font-medium text-slate-700">
-                        <li class="flex gap-2"><i class="fas fa-check-circle text-green-500 mt-1"></i> High Income Zone (Top 20%)</li>
-                        <li class="flex gap-2"><i class="fas fa-check-circle text-green-500 mt-1"></i> Strong Demographic Fit</li>
-                    </ul>
-                </div>
-                <div class="card">
-                    <div class="card-head">Nearby Competitors</div>
-                    <div id="res-competitors" class="divide-y divide-slate-100">
-                        <div class="py-2 flex justify-between text-xs"><b>Freson Bros</b> <span class="mono text-slate-500">0.2 km</span></div>
-                        <div class="py-2 flex justify-between text-xs"><b>Tim Hortons</b> <span class="mono text-slate-500">0.4 km</span></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="print-header mt-8 pt-4 border-t border-gray-300 text-center text-xs text-gray-400">
-            CONFIDENTIAL REPORT GENERATED BY CONTEXTCORE INTELLIGENCE SYSTEM
+    <div id="resultsArea" class="hidden">
+        <div class="card" style="background: #f8f9fa;">
+            <h2 id="resTitle">Location Name</h2>
+            <p><strong>Market:</strong> <span id="resMarket"></span></p>
+            <p><strong>Population:</strong> <span id="resPop"></span> | <strong>Avg Income:</strong> $<span id="resInc"></span></p>
+            <p><strong>Score:</strong> <span id="resScore" style="font-weight:bold; font-size: 1.2em;"></span></p>
+            <hr>
+            <h3>Competitors Nearby</h3>
+            <ul id="resRadar"></ul>
         </div>
     </div>
 
     <script>
-        // Set Date
-        document.getElementById('print-date').innerText = new Date().toLocaleDateString();
-
-        // Mode Toggler
-        function setMode(mode) {
-            const b = document.getElementById('btn-broker');
-            const i = document.getElementById('btn-investor');
-            const p = document.getElementById('panel-finance');
+        async function analyzeLocation() {
+            const address = document.getElementById('addressInput').value;
+            const btn = document.querySelector('button');
             
-            if(mode === 'broker') {
-                b.className="px-3 py-1 text-xs font-bold rounded bg-slate-800 text-white";
-                i.className="px-3 py-1 text-xs font-bold rounded text-slate-500 hover:bg-slate-50";
-                p.classList.add('hidden');
-            } else {
-                b.className="px-3 py-1 text-xs font-bold rounded text-slate-500 hover:bg-slate-50";
-                i.className="px-3 py-1 text-xs font-bold rounded bg-slate-800 text-white";
-                p.classList.remove('hidden');
-            }
-        }
-
-        // Calculator Logic
-        function calcReturns() {
-            const p = parseFloat(document.getElementById('calc-price').value);
-            const r = parseFloat(document.getElementById('calc-rent').value);
-            if(p && r) document.getElementById('calc-result').innerText = (((r*12)*0.65)/p*100).toFixed(2) + "%";
-        }
-
-        // Main Analysis Logic
-        async function runAnalysis() {
-            document.body.style.cursor = 'wait';
-            const payload = { address: document.getElementById('address').value, desc: document.getElementById('desc').value };
+            btn.innerText = "Analyzing...";
             
             try {
-                const res = await fetch('/analyze', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)});
-                const data = await res.json();
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ address: address, desc: "Retail" })
+                });
                 
-                // Update Map with Valid Google Embed Protocol
-                const safe = encodeURIComponent(data.loc.address);
-                document.getElementById('mapContainer').innerHTML = `<iframe width="100%" height="100%" frameborder="0" style="border:0" src="https://maps.google.com/maps?q=${safe}&t=&z=14&ie=UTF8&iwloc=&output=embed" allowfullscreen></iframe>`;
+                const data = await response.json();
                 
-                // Update Data
-                document.getElementById('res-score').innerText = data.fit.score;
-                document.getElementById('res-status').innerText = data.fit.status;
-                document.getElementById('res-inc').innerText = "$" + data.demo.inc.toLocaleString();
-                document.getElementById('res-pop').innerText = data.demo.pop.toLocaleString();
-                document.getElementById('res-market').innerText = data.demo.market;
-                document.getElementById('res-radius').innerText = data.radar.radius + " km";
-                document.getElementById('res-address').innerText = data.loc.address;
-
-                // Update Lists
-                const notes = document.getElementById('res-notes'); notes.innerHTML='';
-                data.fit.notes.forEach(n => notes.innerHTML += `<li class="flex gap-2"><i class="fas fa-check-circle text-green-500 mt-1"></i> ${n}</li>`);
+                // Update UI
+                document.getElementById('resTitle').innerText = data.loc.address;
+                document.getElementById('resMarket').innerText = data.demo.market;
+                document.getElementById('resPop').innerText = data.demo.pop.toLocaleString();
+                document.getElementById('resInc').innerText = data.demo.inc.toLocaleString();
+                document.getElementById('resScore').innerText = `${data.fit.score} / 100 (${data.fit.status})`;
                 
-                const comps = document.getElementById('res-competitors'); comps.innerHTML='';
-                data.radar.list.forEach(c => {
-                    comps.innerHTML += `<div class="py-2 flex justify-between text-xs"><b>${c.name}</b> <span class="mono text-slate-500">${c.dist}</span></div>`;
+                // Update Competitor List
+                const list = document.getElementById('resRadar');
+                list.innerHTML = '';
+                data.radar.list.forEach(item => {
+                    const li = document.createElement('li');
+                    li.innerText = `${item.name} (${item.type}) - ${item.dist}`;
+                    list.appendChild(li);
                 });
 
-            } catch(e) { alert("Error: " + e); }
-            finally { document.body.style.cursor = 'default'; }
+                document.getElementById('resultsArea').classList.remove('hidden');
+
+            } catch (err) {
+                alert("Error connecting to server.");
+                console.error(err);
+            }
+            
+            btn.innerText = "Analyze Location";
         }
-        
-        // Start in Investor Mode
-        window.onload = function() { setMode('investor'); };
-        document.addEventListener('keydown', e => { if(e.key==='Enter') runAnalysis(); });
     </script>
 </body>
 </html>
