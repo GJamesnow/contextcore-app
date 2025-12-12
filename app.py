@@ -16,8 +16,8 @@ def home():
 
 @app.route('/analyze', methods=['POST'])
 def analyze():
-    # This route will only return an error message to the frontend, 
-    # forcing the dashboard.html to run its local, unbreakable demo logic.
+    # When the frontend calls the server for data, we return an error.
+    # The frontend's JavaScript will see this error and immediately run the local demo data.
     return jsonify({"error": "Server is in Demo Mode. Live analysis disabled."}), 500
 
 if __name__ == '__main__':
