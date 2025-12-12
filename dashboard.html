@@ -312,19 +312,17 @@
                 // Redirect to Stripe - This is the primary monetization step
                 window.open(paymentLink, '_blank'); 
                 
-                // --- PDF GENERATION FOR TESTING ONLY ---
-                // This block executes for testing but should be behind a successful payment check
+                // --- PDF GENERATION FOR TESTING ONLY (Must be behind successful payment in final product) ---
                 const el = document.getElementById('printableArea');
                 
-                // Hide non-printable elements (command bar, sidebar, map controls)
+                // 1. Prepare for print
                 document.querySelectorAll('.no-print').forEach(e => e.style.display = 'none');
                 document.querySelector('.pdf-header').style.display = 'block';
 
-                // Hide Leaflet zoom controls for the PDF
                 const controlContainer = document.querySelector('.leaflet-control-container');
                 if (controlContainer) controlContainer.style.display = 'none';
 
-                // CRITICAL FIX: Force Leaflet to re-render the map tiles and wait
+                // 2. CRITICAL FIX: Force Map Invalidation and Delay
                 map.invalidateSize(true); 
                 
                 setTimeout(() => {
@@ -335,7 +333,7 @@
                         html2canvas: { scale: 2 },
                         jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
                     }).from(el).save().then(() => {
-                        // Restore hidden elements after PDF generation
+                        // 3. Restore hidden elements after PDF generation
                         document.querySelectorAll('.no-print').forEach(e => e.style.display = 'flex');
                         document.querySelector('.pdf-header').style.display = 'none';
                         if (controlContainer) controlContainer.style.display = 'block';
