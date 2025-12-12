@@ -322,23 +322,56 @@
                 const controlContainer = document.querySelector('.leaflet-control-container');
                 if (controlContainer) controlContainer.style.display = 'none';
 
-                // 2. CRITICAL FIX: Force Map Invalidation and Delay
+                // 2. CRITICAL FIX: Force Map Invalidation and Delay (The Tileload Waiter)
                 map.invalidateSize(true); 
-                
-                setTimeout(() => {
-                    html2pdf().set({
-                        margin: 0.25,
-                        filename: 'ContextCore_Brief.pdf',
-                        image: { type: 'jpeg', quality: 0.98 },
-                        html2canvas: { scale: 2 },
-                        jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
-                    }).from(el).save().then(() => {
-                        // 3. Restore hidden elements after PDF generation
-                        document.querySelectorAll('.no-print').forEach(e => e.style.display = 'flex');
-                        document.querySelector('.pdf-header').style.display = 'none';
-                        if (controlContainer) controlContainer.style.display = 'block';
-                    });
-                }, 150); // Small delay to guarantee map rendering
+
+                // Use a counter to track when tiles are done loading (The most robust fix)
+                map.once('tileloadstart', function() {
+                    let tilesLoading = 0;
+                    
+                    map.on('tileloadstart', function() { tilesLoading++; });
+                    map.on('tileload', function() { tilesLoading--; });
+                    map.on('tileerror', function() { tilesLoading--; });
+
+                    // Check every 50ms until all tiles are loaded
+                    const checkTiles = setInterval(() => {
+                        if (tilesLoading <= 0) {
+                            clearInterval(checkTiles);
+                            
+                            // Proceed to capture after tiles are 100% stable
+                            html2pdf().set({
+                                margin: 0.25,
+                                filename: 'ContextCore_Brief.pdf',
+                                image: { type: 'jpeg', quality: 0.98 },
+                                html2canvas: { scale: 2 },
+                                jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
+                            }).from(el).save().then(() => {
+                                // 3. Restore hidden elements after PDF generation
+                                document.querySelectorAll('.no-print').forEach(e => e.style.display = 'flex');
+                                document.querySelector('.pdf-header').style.display = 'none';
+                                if (controlContainer) controlContainer.style.display = 'block';
+                            });
+                        }
+                    }, 50);
+
+                });
+
+                // Fallback: If map is already loaded or tileloadstart event doesn't fire, proceed with a small delay
+                if (!map._loading) { 
+                    setTimeout(() => {
+                        html2pdf().set({
+                            margin: 0.25,
+                            filename: 'ContextCore_Brief.pdf',
+                            image: { type: 'jpeg', quality: 0.98 },
+                            html2canvas: { scale: 2 },
+                            jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
+                        }).from(el).save().then(() => {
+                            document.querySelectorAll('.no-print').forEach(e => e.style.display = 'flex');
+                            document.querySelector('.pdf-header').style.display = 'none';
+                            if (controlContainer) controlContainer.style.display = 'block';
+                        });
+                    }, 150);
+                }
                 
             } else {
                 alert("Report export cancelled.");
