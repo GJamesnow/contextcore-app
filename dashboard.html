@@ -188,7 +188,11 @@
             welcomeModal.show();
             
             map = L.map('map').setView([53.5461, -113.4938], 11);
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; CARTO' }).addTo(map);
+            
+            // NOTE: We do NOT use 'crossOrigin: true' here because html2pdf handles it via proxy or useCORS setting
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { 
+                attribution: '&copy; CARTO' 
+            }).addTo(map);
             compLayer.addTo(map);
         });
 
@@ -202,12 +206,10 @@
             if(addr.length < 3) { alert("Please enter a valid address."); return; }
             if(!deal || !asset) { alert("Please select Deal Type and Asset Class."); return; }
 
-            // UI: Show Loader
             loader.style.display = 'flex';
             document.getElementById('loaderText').innerText = "Connecting to Live Geo-Spatial API...";
 
             try {
-                // FETCH (Connecting to your now stable app.py)
                 const res = await fetch('/analyze', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
@@ -217,14 +219,11 @@
                 const data = await res.json();
 
                 if (!res.ok) {
-                    // Handle specific backend error messages (like API Key missing)
                     alert(`Analysis Failed: ${data.error || "Unknown Server Error."}`);
                     return; 
                 }
                 
                 loader.style.display = 'none';
-
-                // Populate Data
                 updateUI(data); 
 
             } catch (err) {
@@ -237,32 +236,24 @@
 
         // --- 2. THE DEMO TRIGGER ---
         function runOneClickDemo() {
-            // If the welcome modal is still shown, close it
             if(welcomeModal) welcomeModal.hide(); 
-            
-            // Auto-fill the inputs to show the user what to search for
             document.getElementById('addressInput').value = "4300 South Park Dr, Stony Plain";
             document.getElementById('dealType').value = "buy";
             document.getElementById('assetClass').value = "retail";
-            
-            // Now call the real live analysis function
             handleAnalyzeClick();
         }
 
         // --- 3. UI Update Utility ---
         function updateUI(data) {
-            // Metrics
             document.getElementById('resScore').innerText = data.fit.score;
             document.getElementById('resStatus').innerText = data.fit.status;
             const badge = document.getElementById('scoreBadge');
             badge.innerText = data.fit.score;
             badge.style.background = data.fit.score > 80 ? "#10b981" : "#f59e0b";
-            
             document.getElementById('resInc').innerText = "$" + data.demo.inc.toLocaleString();
             document.getElementById('resIncBadge').innerText = "Top 20% Percentile";
             document.getElementById('resCap').innerText = "8.25%";
 
-            // Map
             map.setView([data.loc.lat, data.loc.lng], 14);
             compLayer.clearLayers();
             if(mainMarker) map.removeLayer(mainMarker);
@@ -271,7 +262,6 @@
             mainMarker = L.marker([data.loc.lat, data.loc.lng]).addTo(map).bindPopup(data.loc.address).openPopup();
             radiusCircle = L.circle([data.loc.lat, data.loc.lng], { radius: 3000, color: '#2563eb', fillOpacity: 0.05 }).addTo(map);
 
-            // List
             const list = document.getElementById('resRadar');
             list.innerHTML = '';
             data.radar.list.forEach(item => {
@@ -286,21 +276,19 @@
             });
         }
         
-        // --- 4. ACTIVATED SIDEBAR LOGIC ---
         function showProFeatureAlert(featureName) {
-            alert(`Feature Locked: ${featureName} requires a ContextCore Pro subscription. Please upgrade to unlock market gap analysis and predictive modeling.`);
+            alert(`Feature Locked: ${featureName} requires a ContextCore Pro subscription.`);
         }
 
         function showReportsAlert() {
-            alert("To save this report, please click the 'Export Brief' button in the top right corner. You can save the generated PDF anywhere on your device.");
+            alert("To save this report, please click the 'Export Brief' button in the top right corner.");
         }
 
-        // --- 5. PDF EXPORT (Monetization + Map Fix) ---
+        // --- 5. PDF EXPORT (WITH CORS SECURITY FIX) ---
         function downloadPDF() {
-            const paymentLink = 'YOUR_STRIPE_PAYMENT_HERE'; // *** IMPORTANT: PASTE YOUR STRIPE LINK HERE ***
+            const paymentLink = 'YOUR_STRIPE_PAYMENT_HERE'; 
             
             const isDataLoaded = document.getElementById('resScore').innerText !== '--';
-
             if (!isDataLoaded) {
                 alert("Please run an analysis first before attempting to export a brief.");
                 return;
@@ -309,69 +297,36 @@
             const confirmExport = confirm("To generate and download the final Investment Brief, you must have a ContextCore Pro subscription. Click OK to proceed to checkout ($49/mo).");
             
             if (confirmExport) {
-                // Redirect to Stripe - This is the primary monetization step
                 window.open(paymentLink, '_blank'); 
                 
-                // --- PDF GENERATION FOR TESTING ONLY (Must be behind successful payment in final product) ---
                 const el = document.getElementById('printableArea');
                 
-                // 1. Prepare for print
                 document.querySelectorAll('.no-print').forEach(e => e.style.display = 'none');
                 document.querySelector('.pdf-header').style.display = 'block';
 
                 const controlContainer = document.querySelector('.leaflet-control-container');
                 if (controlContainer) controlContainer.style.display = 'none';
 
-                // 2. CRITICAL FIX: Force Map Invalidation and Delay (The Tileload Waiter)
                 map.invalidateSize(true); 
 
-                // Use a counter to track when tiles are done loading (The most robust fix)
-                map.once('tileloadstart', function() {
-                    let tilesLoading = 0;
-                    
-                    map.on('tileloadstart', function() { tilesLoading++; });
-                    map.on('tileload', function() { tilesLoading--; });
-                    map.on('tileerror', function() { tilesLoading--; });
-
-                    // Check every 50ms until all tiles are loaded
-                    const checkTiles = setInterval(() => {
-                        if (tilesLoading <= 0) {
-                            clearInterval(checkTiles);
-                            
-                            // Proceed to capture after tiles are 100% stable
-                            html2pdf().set({
-                                margin: 0.25,
-                                filename: 'ContextCore_Brief.pdf',
-                                image: { type: 'jpeg', quality: 0.98 },
-                                html2canvas: { scale: 2 },
-                                jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
-                            }).from(el).save().then(() => {
-                                // 3. Restore hidden elements after PDF generation
-                                document.querySelectorAll('.no-print').forEach(e => e.style.display = 'flex');
-                                document.querySelector('.pdf-header').style.display = 'none';
-                                if (controlContainer) controlContainer.style.display = 'block';
-                            });
-                        }
-                    }, 50);
-
-                });
-
-                // Fallback: If map is already loaded or tileloadstart event doesn't fire, proceed with a small delay
-                if (!map._loading) { 
-                    setTimeout(() => {
-                        html2pdf().set({
-                            margin: 0.25,
-                            filename: 'ContextCore_Brief.pdf',
-                            image: { type: 'jpeg', quality: 0.98 },
-                            html2canvas: { scale: 2 },
-                            jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
-                        }).from(el).save().then(() => {
-                            document.querySelectorAll('.no-print').forEach(e => e.style.display = 'flex');
-                            document.querySelector('.pdf-header').style.display = 'none';
-                            if (controlContainer) controlContainer.style.display = 'block';
-                        });
-                    }, 150);
-                }
+                // WAIT for tiles to load, then enable CORS in the generator
+                setTimeout(() => {
+                    html2pdf().set({
+                        margin: 0.25,
+                        filename: 'ContextCore_Brief.pdf',
+                        image: { type: 'jpeg', quality: 0.98 },
+                        html2canvas: { 
+                            scale: 2,
+                            useCORS: true, // <--- CRITICAL FIX: ALLOW EXTERNAL IMAGES (MAP TILES)
+                            logging: true 
+                        },
+                        jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
+                    }).from(el).save().then(() => {
+                        document.querySelectorAll('.no-print').forEach(e => e.style.display = 'flex');
+                        document.querySelector('.pdf-header').style.display = 'none';
+                        if (controlContainer) controlContainer.style.display = 'block';
+                    });
+                }, 1000); // 1 second delay to be safe
                 
             } else {
                 alert("Report export cancelled.");
