@@ -58,7 +58,14 @@
         .split-panel { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; height: 500px; }
         .content-card { background: white; border-radius: 12px; border: 1px solid var(--border-color); overflow: hidden; display: flex; flex-direction: column; }
         .card-header { padding: 1rem; border-bottom: 1px solid var(--border-color); font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+        
+        /* INTERACTIVE MAP */
         #map { flex: 1; width: 100%; height: 100%; background: #e5e7eb; }
+        
+        /* STATIC MAP FOR PDF (Initially Hidden) */
+        #pdf-map-container { display: none; width: 100%; height: 100%; background: #f0f0f0; }
+        #pdf-static-map { width: 100%; height: 100%; object-fit: cover; }
+
         .list-container { flex: 1; overflow-y: auto; padding: 0; }
         .list-item { padding: 1rem; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
 
@@ -163,7 +170,13 @@
             <div class="split-panel">
                 <div class="content-card">
                     <div class="card-header"><span>Spatial Analysis</span><span class="badge bg-light text-dark border">3km Radius</span></div>
+                    
                     <div id="map"></div>
+                    
+                    <div id="pdf-map-container">
+                        <img id="pdf-static-map" src="" alt="Analysis Map" crossorigin="anonymous">
+                    </div>
+
                 </div>
                 <div class="content-card">
                     <div class="card-header"><span>Competitive Set</span></div>
@@ -182,20 +195,16 @@
     <script>
         let map, mainMarker, radiusCircle, compLayer = L.layerGroup();
         let welcomeModal;
+        let STATIC_MAP_URL = ''; // Global variable to store URL
 
         document.addEventListener('DOMContentLoaded', () => {
             welcomeModal = new bootstrap.Modal(document.getElementById('welcomeModal'));
             welcomeModal.show();
             
             map = L.map('map').setView([53.5461, -113.4938], 11);
-            
-            // --- CRITICAL FIX 1: Allow Cross-Origin (Anonymous) Images ---
-            // This allows the browser to trust the map tiles for the screenshot
             L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { 
-                attribution: '&copy; CARTO',
-                crossOrigin: 'anonymous' 
+                attribution: '&copy; CARTO' 
             }).addTo(map);
-            
             compLayer.addTo(map);
         });
 
@@ -227,6 +236,12 @@
                 }
                 
                 loader.style.display = 'none';
+
+                // STORE THE URL FROM THE SERVER
+                if(data.static_map_url) {
+                    STATIC_MAP_URL = data.static_map_url;
+                }
+                
                 updateUI(data); 
 
             } catch (err) {
@@ -287,7 +302,7 @@
             alert("To save this report, please click the 'Export Brief' button in the top right corner.");
         }
 
-        // --- 5. PDF EXPORT (WITH CORS SECURITY FIX) ---
+        // --- 5. THE STRATEGIC FIX: STATIC MAP SWAP ---
         function downloadPDF() {
             const paymentLink = 'YOUR_STRIPE_PAYMENT_HERE'; 
             
@@ -302,34 +317,41 @@
             if (confirmExport) {
                 window.open(paymentLink, '_blank'); 
                 
+                // 1. Prepare Elements
+                const interactiveMap = document.getElementById('map');
+                const staticMapContainer = document.getElementById('pdf-map-container');
+                const staticMapImage = document.getElementById('pdf-static-map');
+
+                // 2. Load the Static Image
+                if(STATIC_MAP_URL) {
+                    staticMapImage.src = STATIC_MAP_URL;
+                }
+
+                // 3. Swap: Hide interactive, show static
+                interactiveMap.style.display = 'none';
+                staticMapContainer.style.display = 'block';
+
                 const el = document.getElementById('printableArea');
-                
                 document.querySelectorAll('.no-print').forEach(e => e.style.display = 'none');
                 document.querySelector('.pdf-header').style.display = 'block';
 
-                const controlContainer = document.querySelector('.leaflet-control-container');
-                if (controlContainer) controlContainer.style.display = 'none';
-
-                map.invalidateSize(true); 
-
-                // WAIT for tiles to load, then enable CORS in the generator
+                // 4. Capture with Delay (Allow image to load)
                 setTimeout(() => {
                     html2pdf().set({
                         margin: 0.25,
                         filename: 'ContextCore_Brief.pdf',
                         image: { type: 'jpeg', quality: 0.98 },
-                        html2canvas: { 
-                            scale: 2,
-                            useCORS: true, // <--- CRITICAL FIX 2: Enable CORS in Generator
-                            logging: true 
-                        },
+                        html2canvas: { scale: 2, useCORS: true },
                         jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
                     }).from(el).save().then(() => {
+                        // 5. Restore Original State
                         document.querySelectorAll('.no-print').forEach(e => e.style.display = 'flex');
                         document.querySelector('.pdf-header').style.display = 'none';
-                        if (controlContainer) controlContainer.style.display = 'block';
+                        
+                        interactiveMap.style.display = 'block';
+                        staticMapContainer.style.display = 'none';
                     });
-                }, 1000); // 1 second delay to be safe
+                }, 1500); 
                 
             } else {
                 alert("Report export cancelled.");
