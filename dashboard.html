@@ -4,188 +4,85 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ContextCore | Intelligence Command</title>
-    
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <style>
-        /* === THEME VARIABLES === */
-        :root {
-            --bg-body: #f8fafc;
-            --bg-sidebar: #0f172a; 
-            --primary: #2563eb;    
-            --success: #10b981;
-            --text-dark: #1e293b;
-            --text-muted: #64748b;
-            --border-color: #e2e8f0;
-        }
-
+        :root { --bg-body: #f8fafc; --bg-sidebar: #0f172a; --primary: #2563eb; --text-dark: #1e293b; --text-muted: #64748b; --border-color: #e2e8f0; }
         body { font-family: 'Inter', sans-serif; background-color: var(--bg-body); color: var(--text-dark); height: 100vh; overflow: hidden; }
         .app-container { display: flex; height: 100vh; }
-        
-        /* SIDEBAR */
         .sidebar { width: 280px; background: var(--bg-sidebar); color: white; display: flex; flex-direction: column; padding: 1.5rem; flex-shrink: 0; z-index: 1000; }
-        .brand { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.02em; display: flex; align-items: center; gap: 10px; margin-bottom: 3rem; }
-        .brand-icon { color: var(--primary); font-size: 1.4rem; }
-        
-        .nav-item { padding: 0.75rem 1rem; border-radius: 8px; color: #94a3b8; font-weight: 500; font-size: 0.9rem; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 12px; }
-        .nav-item:hover, .nav-item.active { background: #1e293b; color: white; }
-        .nav-item.active { border-left: 3px solid var(--primary); }
-
-        /* MAIN CONTENT */
-        .main-content { flex: 1; overflow-y: auto; padding: 2rem; position: relative; }
-        
-        /* COMMAND BAR */
-        .command-bar { background: white; padding: 1rem; border-radius: 12px; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1); display: flex; gap: 1rem; align-items: center; margin-bottom: 2rem; border: 1px solid var(--border-color); }
-        .form-control-custom, .select-custom { border: 1px solid var(--border-color); border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.95rem; width: 100%; transition: border-color 0.2s; }
-        .btn-action { background: var(--primary); color: white; border: none; padding: 0.75rem 2rem; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.2s; white-space: nowrap; }
-        
-        /* KPI GRID */
+        .brand { font-size: 1.25rem; font-weight: 800; gap: 10px; margin-bottom: 3rem; display: flex; align-items: center; }
+        .nav-item { padding: 0.75rem 1rem; border-radius: 8px; color: #94a3b8; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 12px; margin-bottom: 0.5rem; }
+        .nav-item.active { background: #1e293b; color: white; border-left: 3px solid var(--primary); }
+        .main-content { flex: 1; overflow-y: auto; padding: 2rem; }
+        .command-bar { background: white; padding: 1rem; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; gap: 1rem; margin-bottom: 2rem; border: 1px solid var(--border-color); }
+        .form-control-custom { border: 1px solid var(--border-color); border-radius: 8px; padding: 0.75rem; width: 100%; }
+        .btn-action { background: var(--primary); color: white; border: none; padding: 0.75rem 2rem; border-radius: 8px; font-weight: 600; }
         .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-bottom: 1.5rem; }
-        .kpi-card { background: white; border-radius: 12px; padding: 1.5rem; border: 1px solid var(--border-color); box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
-        .kpi-header { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; }
-        .kpi-value { font-size: 2rem; font-weight: 700; color: var(--text-dark); letter-spacing: -1px; }
-        
-        /* SCORE CIRCLE */
-        .score-badge { width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; color: white; font-size: 1.2rem; }
-        
-        /* MAP & LIST */
+        .kpi-card { background: white; border-radius: 12px; padding: 1.5rem; border: 1px solid var(--border-color); }
+        .kpi-value { font-size: 2rem; font-weight: 700; }
         .split-panel { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; height: 500px; }
         .content-card { background: white; border-radius: 12px; border: 1px solid var(--border-color); overflow: hidden; display: flex; flex-direction: column; }
-        .card-header { padding: 1rem; border-bottom: 1px solid var(--border-color); font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
-        
-        /* INTERACTIVE MAP */
         #map { flex: 1; width: 100%; height: 100%; background: #e5e7eb; }
-        
-        /* STATIC MAP FOR PDF (Initially Hidden) */
-        #pdf-map-container { display: none; width: 100%; height: 100%; background: #f0f0f0; }
-        #pdf-static-map { width: 100%; height: 100%; object-fit: cover; }
-
-        .list-container { flex: 1; overflow-y: auto; padding: 0; }
-        .list-item { padding: 1rem; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
-
-        /* OVERLAY */
         #loader { position: fixed; inset: 0; background: rgba(255,255,255,0.98); z-index: 2000; display: none; align-items: center; justify-content: center; flex-direction: column; }
-        .pdf-header { display: none; text-align: center; border-bottom: 2px solid #000; margin-bottom: 20px; }
-        
-        .blur-feature { filter: blur(4px); user-select: none; }
-        .lock-badge { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 4px 12px; border-radius: 20px; border: 1px solid var(--border-color); font-size: 0.75rem; font-weight: 700; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); color: var(--text-muted); }
-
     </style>
 </head>
 <body>
 
-    <div class="modal fade" id="welcomeModal" tabindex="-1" data-bs-backdrop="static">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content" style="border-radius: 16px; border: none; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);">
-                <div class="modal-header" style="border-bottom:none; padding: 2rem 2rem 0;">
-                    <h3 class="modal-title fw-bold">ContextCore Intelligence</h3>
-                </div>
-                <div class="modal-body" style="padding: 1rem 2rem 2rem;">
-                    <p class="text-muted">The Real-Time Decision Engine for CRE Professionals.</p>
-                    <div class="d-grid gap-2 mt-4">
-                        <button class="btn btn-primary btn-lg fw-bold" onclick="runOneClickDemo()">
-                            <i class="bi bi-play-circle-fill me-2"></i> Launch Demo Analysis
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <div id="loader">
         <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status"></div>
-        <h4 class="fw-bold">Aggregating Market Sources...</h4>
-        <div class="text-muted" id="loaderText">Connecting to Geo-Spatial Grid</div>
+        <h4 class="fw-bold">Processing Intelligence...</h4>
     </div>
 
     <div class="app-container">
-        <aside class="sidebar no-print">
-            <div class="brand"><i class="bi bi-c-square-fill brand-icon"></i> ContextCore</div>
+        <aside class="sidebar">
+            <div class="brand"><i class="bi bi-c-square-fill text-primary"></i> ContextCore</div>
             <div class="nav-item active"><i class="bi bi-grid-1x2-fill"></i> Site Intelligence</div>
-            
-            <div class="nav-item" onclick="showProFeatureAlert('Void Analysis')">
-                <i class="bi bi-layers-fill"></i> Void Analysis 
-                <span class="ms-auto badge bg-primary text-white" style="font-size:0.7rem;">PRO</span>
-            </div>
-            
-            <div class="nav-item" onclick="showReportsAlert()">
-                <i class="bi bi-bookmark-fill"></i> Saved Reports
-            </div>
-            
-            <div class="user-panel" style="margin-top:auto; padding-top:1.5rem; border-top:1px solid #1e293b;">
-                <div class="fw-bold" style="font-size:0.9rem;">Guest Broker</div>
-                <div class="text-muted" style="font-size:0.8rem;">Free Plan</div>
-            </div>
+            <div class="nav-item"><i class="bi bi-layers-fill"></i> Void Analysis <span class="badge bg-primary ms-auto">PRO</span></div>
         </aside>
 
-        <main class="main-content" id="printableArea">
-            <div class="pdf-header">
-                <h1>Investment Intelligence Brief</h1>
-                <p>CONFIDENTIAL REPORT</p>
-            </div>
-
-            <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+        <main class="main-content">
+            <div class="d-flex justify-content-between align-items-center mb-4">
                 <h4 class="fw-bold m-0">Command Center</h4>
                 <button class="btn btn-outline-dark btn-sm fw-bold" onclick="downloadPDF()"><i class="bi bi-download me-2"></i>Export Brief</button>
             </div>
 
-            <div class="command-bar no-print">
+            <div class="command-bar">
                 <input type="text" class="form-control-custom" id="addressInput" placeholder="Enter Site Address...">
-                <select class="select-custom" id="dealType"><option value="buy">Acquisition</option><option value="lease">Leasing</option></select>
-                <select class="select-custom" id="assetClass"><option value="retail">Retail</option><option value="industrial">Industrial</option></select>
                 <button class="btn-action" onclick="handleAnalyzeClick()">RUN INTELLIGENCE</button>
             </div>
 
             <div class="kpi-grid">
-                <div class="kpi-card d-flex align-items-center justify-content-between">
-                    <div>
-                        <div class="kpi-header">Opportunity Score</div>
-                        <div class="kpi-value" id="resScore">--</div>
-                        <div class="small text-muted" id="resStatus">Awaiting Data</div>
-                    </div>
-                    <div class="score-badge" id="scoreBadge" style="background:#e2e8f0;">-</div>
+                <div class="kpi-card">
+                    <div class="small fw-bold text-muted">OPPORTUNITY SCORE</div>
+                    <div class="kpi-value" id="resScore">--</div>
+                    <div class="small text-muted" id="resStatus">Awaiting Data</div>
                 </div>
                 <div class="kpi-card">
-                    <div class="kpi-header">Avg Household Income</div>
+                    <div class="small fw-bold text-muted">AVG INCOME</div>
                     <div class="kpi-value" id="resInc">--</div>
-                    <div class="small text-success fw-bold" id="resIncBadge"></div>
                 </div>
                 <div class="kpi-card">
-                    <div class="kpi-header">Est. Cap Rate</div>
-                    <div class="kpi-value" style="color: var(--primary);" id="resCap">--</div>
+                    <div class="small fw-bold text-muted">EST. CAP RATE</div>
+                    <div class="kpi-value text-primary">8.25%</div>
                 </div>
-                <div class="kpi-card position-relative">
-                    <div class="kpi-header">Projected Rent / SQFT</div>
-                    <div class="kpi-value blur-feature">$32.50</div>
-                    <div class="lock-badge"><i class="bi bi-lock-fill me-1"></i> PRO</div>
+                <div class="kpi-card">
+                    <div class="small fw-bold text-muted">PROJECTED RENT</div>
+                    <div class="kpi-value" style="filter: blur(4px);">$32.50</div>
                 </div>
             </div>
 
             <div class="split-panel">
                 <div class="content-card">
-                    <div class="card-header"><span>Spatial Analysis</span><span class="badge bg-light text-dark border">3km Radius</span></div>
-                    
                     <div id="map"></div>
-                    
-                    <div id="pdf-map-container">
-                        <img id="pdf-static-map" src="" alt="Analysis Map" crossorigin="anonymous">
-                    </div>
-
                 </div>
-                <div class="content-card">
-                    <div class="card-header"><span>Competitive Set</span></div>
-                    <div id="resRadar" class="list-container">
-                        <div class="d-flex flex-column align-items-center justify-content-center h-100 text-muted">
-                            <i class="bi bi-buildings display-4 opacity-25"></i>
-                            <div class="small mt-2">Waiting for input...</div>
-                        </div>
-                    </div>
+                <div class="content-card p-3" style="overflow-y:auto;">
+                    <h6 class="fw-bold border-bottom pb-2">Competitive Set</h6>
+                    <div id="resRadar">Waiting for input...</div>
                 </div>
             </div>
         </main>
@@ -193,33 +90,19 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        let map, mainMarker, radiusCircle, compLayer = L.layerGroup();
-        let welcomeModal;
-        let STATIC_MAP_URL = ''; // Global variable to store URL
+        let map, mainMarker;
+        let currentAddress = "";
 
         document.addEventListener('DOMContentLoaded', () => {
-            welcomeModal = new bootstrap.Modal(document.getElementById('welcomeModal'));
-            welcomeModal.show();
-            
             map = L.map('map').setView([53.5461, -113.4938], 11);
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { 
-                attribution: '&copy; CARTO' 
-            }).addTo(map);
-            compLayer.addTo(map);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; CARTO' }).addTo(map);
         });
 
-        // --- 1. THE GUARANTEED LIVE ANALYSIS FUNCTION ---
         async function handleAnalyzeClick() {
             const addr = document.getElementById('addressInput').value;
-            const deal = document.getElementById('dealType').value;
-            const asset = document.getElementById('assetClass').value;
-            const loader = document.getElementById('loader');
-
-            if(addr.length < 3) { alert("Please enter a valid address."); return; }
-            if(!deal || !asset) { alert("Please select Deal Type and Asset Class."); return; }
-
-            loader.style.display = 'flex';
-            document.getElementById('loaderText').innerText = "Connecting to Live Geo-Spatial API...";
+            if(addr.length < 3) return alert("Enter address");
+            
+            document.getElementById('loader').style.display = 'flex';
 
             try {
                 const res = await fetch('/analyze', {
@@ -227,134 +110,52 @@
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ address: addr })
                 });
-
                 const data = await res.json();
-
-                if (!res.ok) {
-                    alert(`Analysis Failed: ${data.error || "Unknown Server Error."}`);
-                    return; 
-                }
                 
-                loader.style.display = 'none';
+                if(!res.ok) throw new Error(data.error || "Error");
 
-                // STORE THE URL FROM THE SERVER
-                if(data.static_map_url) {
-                    STATIC_MAP_URL = data.static_map_url;
-                }
+                document.getElementById('resScore').innerText = data.fit.score;
+                document.getElementById('resStatus').innerText = data.fit.status;
+                document.getElementById('resInc').innerText = "$" + data.demo.inc.toLocaleString();
                 
-                updateUI(data); 
+                // Clear and update map markers
+                map.eachLayer(layer => {
+                    if (layer instanceof L.Marker || layer instanceof L.CircleMarker) {
+                        map.removeLayer(layer);
+                    }
+                });
 
-            } catch (err) {
-                console.error(err);
-                alert("Fatal Error: Could not communicate with the stable server.");
+                map.setView([data.loc.lat, data.loc.lng], 14);
+                mainMarker = L.marker([data.loc.lat, data.loc.lng]).addTo(map);
+                
+                const list = document.getElementById('resRadar');
+                list.innerHTML = '';
+                data.radar.list.forEach(item => {
+                    list.innerHTML += `<div class="mb-2 pb-2 border-bottom"><strong>${item.name}</strong><br><small class="text-muted">${item.type}</small></div>`;
+                    // Note: We don't need to draw competitor markers here, as the PDF uses the server-generated static map.
+                });
+
+                currentAddress = data.loc.address;
+                
+            } catch (e) {
+                alert(e.message);
             } finally {
-                loader.style.display = 'none';
+                document.getElementById('loader').style.display = 'none';
             }
         }
 
-        // --- 2. THE DEMO TRIGGER ---
-        function runOneClickDemo() {
-            if(welcomeModal) welcomeModal.hide(); 
-            document.getElementById('addressInput').value = "4300 South Park Dr, Stony Plain";
-            document.getElementById('dealType').value = "buy";
-            document.getElementById('assetClass').value = "retail";
-            handleAnalyzeClick();
-        }
-
-        // --- 3. UI Update Utility ---
-        function updateUI(data) {
-            document.getElementById('resScore').innerText = data.fit.score;
-            document.getElementById('resStatus').innerText = data.fit.status;
-            const badge = document.getElementById('scoreBadge');
-            badge.innerText = data.fit.score;
-            badge.style.background = data.fit.score > 80 ? "#10b981" : "#f59e0b";
-            document.getElementById('resInc').innerText = "$" + data.demo.inc.toLocaleString();
-            document.getElementById('resIncBadge').innerText = "Top 20% Percentile";
-            document.getElementById('resCap').innerText = "8.25%";
-
-            map.setView([data.loc.lat, data.loc.lng], 14);
-            compLayer.clearLayers();
-            if(mainMarker) map.removeLayer(mainMarker);
-            if(radiusCircle) map.removeLayer(radiusCircle);
-
-            mainMarker = L.marker([data.loc.lat, data.loc.lng]).addTo(map).bindPopup(data.loc.address).openPopup();
-            radiusCircle = L.circle([data.loc.lat, data.loc.lng], { radius: 3000, color: '#2563eb', fillOpacity: 0.05 }).addTo(map);
-
-            const list = document.getElementById('resRadar');
-            list.innerHTML = '';
-            data.radar.list.forEach(item => {
-                list.innerHTML += `
-                <div class="list-item">
-                    <div><div class="fw-bold" style="font-size:0.9rem;">${item.name}</div><div class="text-muted" style="font-size:0.75rem;">${item.type}</div></div>
-                    <span class="badge bg-light text-dark border">${item.dist}</span>
-                </div>`;
-                if(item.lat && item.lng) {
-                    L.circleMarker([item.lat, item.lng], { radius: 6, fillColor: '#ef4444', color: 'white', weight: 1, fillOpacity: 1 }).addTo(compLayer).bindPopup(item.name);
-                }
-            });
-        }
-        
-        function showProFeatureAlert(featureName) {
-            alert(`Feature Locked: ${featureName} requires a ContextCore Pro subscription.`);
-        }
-
-        function showReportsAlert() {
-            alert("To save this report, please click the 'Export Brief' button in the top right corner.");
-        }
-
-        // --- 5. THE STRATEGIC FIX: STATIC MAP SWAP ---
+        // --- THE MONETIZED DOWNLOAD FUNCTION ---
         function downloadPDF() {
-            const paymentLink = 'YOUR_STRIPE_PAYMENT_HERE'; 
+            if (!currentAddress) return alert("Run analysis first.");
             
-            const isDataLoaded = document.getElementById('resScore').innerText !== '--';
-            if (!isDataLoaded) {
-                alert("Please run an analysis first before attempting to export a brief.");
-                return;
-            }
-
-            const confirmExport = confirm("To generate and download the final Investment Brief, you must have a ContextCore Pro subscription. Click OK to proceed to checkout ($49/mo).");
+            const paymentLink = 'YOUR_STRIPE_PAYMENT_HERE';
             
-            if (confirmExport) {
-                window.open(paymentLink, '_blank'); 
+            if(confirm("Download Full Investment Brief ($49/mo)?")) {
+                // Open Stripe link
+                window.open(paymentLink, '_blank');
                 
-                // 1. Prepare Elements
-                const interactiveMap = document.getElementById('map');
-                const staticMapContainer = document.getElementById('pdf-map-container');
-                const staticMapImage = document.getElementById('pdf-static-map');
-
-                // 2. Load the Static Image
-                if(STATIC_MAP_URL) {
-                    staticMapImage.src = STATIC_MAP_URL;
-                }
-
-                // 3. Swap: Hide interactive, show static
-                interactiveMap.style.display = 'none';
-                staticMapContainer.style.display = 'block';
-
-                const el = document.getElementById('printableArea');
-                document.querySelectorAll('.no-print').forEach(e => e.style.display = 'none');
-                document.querySelector('.pdf-header').style.display = 'block';
-
-                // 4. Capture with Delay (Allow image to load)
-                setTimeout(() => {
-                    html2pdf().set({
-                        margin: 0.25,
-                        filename: 'ContextCore_Brief.pdf',
-                        image: { type: 'jpeg', quality: 0.98 },
-                        html2canvas: { scale: 2, useCORS: true },
-                        jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
-                    }).from(el).save().then(() => {
-                        // 5. Restore Original State
-                        document.querySelectorAll('.no-print').forEach(e => e.style.display = 'flex');
-                        document.querySelector('.pdf-header').style.display = 'none';
-                        
-                        interactiveMap.style.display = 'block';
-                        staticMapContainer.style.display = 'none';
-                    });
-                }, 1500); 
-                
-            } else {
-                alert("Report export cancelled.");
+                // Trigger the server to generate and send the file
+                window.location.href = `/generate_report?address=${encodeURIComponent(currentAddress)}`;
             }
         }
     </script>
