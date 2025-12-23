@@ -1,0 +1,8 @@
+node_modules/
+.next/
+dist/
+.env
+postgres_data/
+npm-debug.log
+yarn-error.log
+.DS_Store

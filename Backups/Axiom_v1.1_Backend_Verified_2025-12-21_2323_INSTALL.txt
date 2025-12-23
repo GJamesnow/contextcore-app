@@ -1,0 +1,32 @@
+﻿================================================================================
+  AXIOM DEPLOYMENT MANIFEST
+  Package: Axiom_v1.1_Backend_Verified_2025-12-21_2323.zip
+  Date:    2025-12-21_2323
+  Target:  C:\Axiom\backend
+================================================================================
+
+[HOW TO IMPLEMENT THIS SNAPSHOT]
+
+1. CLEAR THE FIELD
+   - Open PowerShell.
+   - Run: Remove-Item "C:\Axiom\backend\*" -Recurse -Force
+
+2. DEPLOY PAYLOAD
+   - Extract the contents of "Axiom_v1.1_Backend_Verified_2025-12-21_2323.zip" into "C:\Axiom\backend".
+
+3. RESTORE DEPENDENCIES
+   - Navigate to C:\Axiom\backend
+   - Run: npm install
+
+4. IGNITE DATABASE
+   - Ensure Docker Desktop is running.
+   - Run: docker-compose up -d
+   - Run: npx prisma generate   (CRITICAL: Rebuilds the client)
+   - Run: npx prisma db push
+
+5. RESTORE INTELLIGENCE (AI Context)
+   - Inside the ZIP, find "RECOVERY_MANUAL.txt".
+   - Open it and paste the [ACTIVATION KEY] into your AI Chatbot.
+   - This will restore the "Senior Systems Architect" persona.
+
+================================================================================

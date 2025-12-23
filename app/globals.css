@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #0f172a; /* Slate 900 */
+  --foreground: #f8fafc; /* Slate 50 */
+  --card: #1e293b;       /* Slate 800 */
+  --card-border: #334155; /* Slate 700 */
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+}
+
+/* Custom Utilities */
+.card {
+  @apply bg-slate-800 border border-slate-700 rounded-lg shadow-sm;
+}

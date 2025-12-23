@@ -1,0 +1,12 @@
+SYSTEM OVERRIDE: AXIOM PROJECT
+Version: 2.2-TITANIUM
+Status: STABLE (Ingestion, Truth Engine ROI Scoring, and Grid Analytics Verified)
+Current Port: 3001
+
+[PROJECT ARCHITECTURE]
+- Backend: Node/Express (Port 3001)
+- DB: Postgres (Docker)
+- Logic: Truth Engine (ROI Scoring) + Analytics (Heatmap Aggregation)
+
+[IMMEDIATE GOAL]
+- Transition to Frontend: Visualize the Heatmap on a Map Interface.
