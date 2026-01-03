@@ -1,8 +1,6 @@
-node_modules/
-.next/
-dist/
+node_modules
+.next
 .env
-postgres_data/
-npm-debug.log
-yarn-error.log
-.DS_Store
+dist
+dev.db
+dev.db-journal

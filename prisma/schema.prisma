@@ -3,19 +3,28 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
-model GeoLog {
-  id          String   @id @default(uuid())
-  latitude    Float
-  longitude   Float
-  source      String?
-  marketScore Float    @default(0)
-  status      String   @default("PENDING")
-  timestamp   DateTime @default(now())
+model AssetAnalysis {
+  id               Int      @id @default(autoincrement())
+  createdAt        DateTime @default(now())
+  
+  // Location
+  country          String
+  region           String
+  city             String
+  notes            String
 
-  @@index([timestamp])
-  @@index([marketScore])
+  // Financials
+  purchasePrice    Float
+  renovationBudget Float
+  grossRent        Float
+  operatingExpenses Float
+
+  // Metrics
+  capRate          Float
+  cashOnCash       Float
+  contextScore     Int
 }
