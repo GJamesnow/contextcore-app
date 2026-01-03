@@ -65,7 +65,7 @@ export default function ContextCore() {
     setSaveStatus("SAVING");
     try {
       const payload = { location, financials, metrics, contextScore };
-      const res = await fetch("http://localhost:3001/api/analysis", {
+      const res = await fetch("/api/analysis", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
