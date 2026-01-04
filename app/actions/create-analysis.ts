@@ -1,31 +1,14 @@
-'use server';
-
-import { PrismaClient } from '@prisma/client';
-import { redirect } from 'next/navigation';
-
-const prisma = new PrismaClient();
+"use server";
+import { prisma } from "@/lib/prisma";
+import { redirect } from "next/navigation";
 
 export async function createAnalysis(formData: FormData) {
-  const rawData = {
-    name: formData.get('name') as string,
-    purchasePrice: parseFloat(formData.get('purchasePrice') as string),
-    noi: parseFloat(formData.get('noi') as string),
-    notes: formData.get('notes') as string,
-    googlePlaceId: formData.get('googlePlaceId') as string,
-    formattedAddress: formData.get('formattedAddress') as string,
-    latitude: parseFloat(formData.get('latitude') as string),
-    longitude: parseFloat(formData.get('longitude') as string),
-    propertyType: formData.get('propertyType') as string,
-  };
+  const address = formData.get("address") as string;
+  if (!address) return;
 
-  // Validation: Ensure we actually have the location lock
-  if (!rawData.googlePlaceId || !rawData.latitude) {
-    throw new Error('Analysis failed: No valid location selected.');
-  }
-
-  const newDeal = await prisma.assetAnalysis.create({
-    data: rawData,
+  // Create initial record; price 0 triggers simulation later
+  const analysis = await prisma.analysis.create({
+    data: { address: address, city: "Searching...", purchasePrice: 0 }
   });
-
-  redirect(\/analysis/\\);
+  redirect(`/analysis/${analysis.id}`);
 }
