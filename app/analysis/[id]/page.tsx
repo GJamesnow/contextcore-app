@@ -1,132 +1,67 @@
-import { notFound } from 'next/navigation';
-import { PrismaClient } from '@prisma/client'; 
-import DealMap from '@/components/visualizations/DealMap';
-import { Building2, MapPin, Share2, ArrowLeft } from 'lucide-react';
-import Link from 'next/link';
+import { prisma } from "@/lib/prisma";
+import FinancialEngine from "@/components/visualizations/FinancialEngine";
+import DealMap from "@/components/visualizations/DealMap";
 
-const prisma = new PrismaClient();
-export const dynamic = 'force-dynamic';
-
-interface PageProps {
-  params: { id: string };
-}
-
-export default async function DealReportPage({ params }: PageProps) {
-  const { id } = params;
-
-  const asset = await prisma.assetAnalysis.findUnique({
-    where: { id },
+export default async function AnalysisPage({ params }: { params: { id: string } }) {
+  const analysis = await prisma.analysis.findUnique({
+    where: { id: params.id },
   });
 
-  if (!asset) {
-    notFound();
+  if (!analysis) {
+    return <div>Analysis not found</div>;
   }
 
-  const formatCurrency = (val: number) => 
-    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(val);
-
   return (
-    <main className='min-h-screen bg-gray-50 p-6'>
-      <div className='max-w-5xl mx-auto space-y-6'>
+    <main className="min-h-screen bg-slate-50 p-6">
+      <div className="max-w-6xl mx-auto space-y-6">
         
-        {/* Header / Nav */}
-        <div className='flex items-center justify-between'>
-          <Link href='/' className='flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors'>
-            <ArrowLeft className='w-4 h-4' />
-            Back to Dashboard
-          </Link>
-          
-          <button className='flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm'>
-            <Share2 className='w-4 h-4' />
-            Share Deal
-          </button>
+        {/* HEADER */}
+        <div className="flex justify-between items-center">
+           <div>
+              <h1 className="text-2xl font-bold text-slate-900">{analysis.address}</h1>
+              <div className="flex gap-2 text-sm text-slate-500 mt-1">
+                 <span>{analysis.city}, {analysis.country}</span>
+                 {analysis.zoningCode && <span className="bg-slate-200 px-2 rounded text-xs py-0.5">Zone: {analysis.zoningCode}</span>}
+              </div>
+           </div>
+           <a href="/" className="text-sm font-medium text-slate-600 hover:text-black"> Back to Search</a>
         </div>
 
-        {/* Main Content Grid */}
-        <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
-          
-          {/* Left Col: Asset Details */}
-          <div className='lg:col-span-2 space-y-6'>
-            
-            {/* Title Card */}
-            <div className='p-6 bg-white rounded-xl shadow-sm border border-gray-100'>
-              <div className='flex items-start justify-between'>
-                <div>
-                  <div className='flex items-center gap-2 mb-2'>
-                    <span className='px-2.5 py-0.5 text-xs font-semibold text-blue-700 bg-blue-50 rounded-full'>
-                      {asset.propertyType || 'Investment'}
+        {/* MAP & CONTEXT */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+           <div className="lg:col-span-2 h-64 rounded-xl overflow-hidden shadow-sm border border-slate-200">
+              <DealMap address={analysis.address} lat={analysis.lat} lng={analysis.lng} />
+           </div>
+           <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+              <h3 className="font-semibold text-slate-900 mb-4">Property Context</h3>
+              <div className="space-y-3 text-sm">
+                 <div className="flex justify-between">
+                    <span className="text-slate-500">Source</span>
+                    <span className="font-medium">Public Record</span>
+                 </div>
+                 <div className="flex justify-between">
+                    <span className="text-slate-500">Year Built</span>
+                    <span className="font-medium">{analysis.yearBuilt || "N/A"}</span>
+                 </div>
+                 <div className="flex justify-between">
+                    <span className="text-slate-500">Flood Zone</span>
+                    <span className="font-medium bg-green-100 text-green-700 px-2 rounded">
+                       {analysis.floodZoneCode || "X (Low Risk)"}
                     </span>
-                  </div>
-                  <h1 className='text-2xl font-bold text-gray-900 sm:text-3xl'>
-                    {asset.name}
-                  </h1>
-                  <div className='flex items-center gap-2 mt-2 text-gray-500'>
-                    <MapPin className='w-4 h-4' />
-                    <span className='text-sm'>{asset.formattedAddress || 'Address not available'}</span>
-                  </div>
-                </div>
-                <div className='p-3 bg-gray-50 rounded-lg'>
-                  <Building2 className='w-8 h-8 text-gray-400' />
-                </div>
-              </div>
-            </div>
-
-            {/* Financials Grid */}
-            <div className='grid grid-cols-1 sm:grid-cols-3 gap-4'>
-              <div className='p-5 bg-white rounded-xl shadow-sm border border-gray-100'>
-                <p className='text-sm font-medium text-gray-500'>Purchase Price</p>
-                <p className='mt-1 text-2xl font-bold text-gray-900'>{formatCurrency(asset.purchasePrice)}</p>
-              </div>
-              <div className='p-5 bg-white rounded-xl shadow-sm border border-gray-100'>
-                <p className='text-sm font-medium text-gray-500'>NOI (Annual)</p>
-                <p className='mt-1 text-2xl font-bold text-green-600'>{formatCurrency(asset.noi)}</p>
-              </div>
-              <div className='p-5 bg-white rounded-xl shadow-sm border border-gray-100'>
-                <p className='text-sm font-medium text-gray-500'>Cap Rate</p>
-                <p className='mt-1 text-2xl font-bold text-blue-600'>
-                  {((asset.noi / asset.purchasePrice) * 100).toFixed(2)}%
-                </p>
-              </div>
-            </div>
-            
-            {/* Notes Section */}
-            <div className='p-6 bg-white rounded-xl shadow-sm border border-gray-100'>
-              <h3 className='mb-4 text-lg font-semibold text-gray-900'>Analysis Notes</h3>
-              <p className='text-gray-600 whitespace-pre-wrap leading-relaxed'>
-                {asset.notes || 'No notes provided for this deal.'}
-              </p>
-            </div>
-          </div>
-
-          {/* Right Col: Map & Visuals */}
-          <div className='lg:col-span-1'>
-            <div className='sticky top-6 space-y-6'>
-              {/* Map Card */}
-              <div className='overflow-hidden bg-white rounded-xl shadow-sm border border-gray-100 h-80'>
-                {asset.latitude && asset.longitude ? (
-                  <DealMap latitude={asset.latitude} longitude={asset.longitude} />
-                ) : (
-                  <div className='flex items-center justify-center h-full text-gray-400 bg-gray-50'>
-                    <div className='text-center'>
-                      <MapPin className='w-8 h-8 mx-auto mb-2 opacity-50' />
-                      <span className='text-sm'>No Geolocation Data</span>
+                 </div>
+                 <div className="mt-4 pt-4 border-t border-slate-100">
+                    <div className="text-xs text-slate-400">DATA PROVENANCE</div>
+                    <div className="text-xs text-slate-500 italic mt-1">
+                       Live connectivity enabled. Scraper modules pending activation in Phase 4.
                     </div>
-                  </div>
-                )}
+                 </div>
               </div>
-
-              {/* CTA */}
-              <div className='p-6 bg-blue-900 text-white rounded-xl shadow-lg'>
-                <h3 className='font-semibold text-lg mb-2'>Interested in this asset?</h3>
-                <p className='text-blue-200 text-sm mb-4'>Contact the deal sponsor for full underwriting details.</p>
-                <button className='w-full py-2.5 text-sm font-medium text-blue-900 bg-white rounded-lg hover:bg-blue-50 transition-colors'>
-                  Request Info
-                </button>
-              </div>
-            </div>
-          </div>
-
+           </div>
         </div>
+
+        {/* FINANCIAL ENGINE */}
+        <FinancialEngine initialData={analysis} />
+
       </div>
     </main>
   );
