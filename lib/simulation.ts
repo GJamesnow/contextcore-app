@@ -1,14 +1,13 @@
 export function simulateDealContext(address: string) {
-  // Simple deterministic simulation
-  const hash = address.length * 1000;
-  const arv = 500000 + hash;
+  const hash = address.length * 1234;
+  const arv = 450000 + (hash % 500000);
   return {
-    purchasePrice: Math.round(arv * 0.7),
+    purchasePrice: Math.round(arv * 0.70), // 70% Rule
     arv: arv,
-    rehabCost: 50000,
-    estRent: arv * 0.008,
-    taxAmount: arv * 0.012,
-    yearBuilt: 1980,
-    zoningCode: "R1"
+    rehabCost: 45000,
+    estRent: Math.round(arv * 0.009),
+    taxAmount: Math.round(arv * 0.012),
+    yearBuilt: 1975,
+    zoningCode: "R2-Medium"
   };
 }
