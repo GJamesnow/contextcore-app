@@ -1,15 +1,37 @@
-"use server"
+'use server'
 
-import { prisma } from "@/lib/prisma";
-import { revalidatePath } from "next/cache";
+import { prisma } from '@/lib/prisma';
+import { revalidatePath } from 'next/cache';
 
-export async function updateAnalysis(id: string, data: any) {
-  if (!id) throw new Error("Analysis ID is required");
+// Define the shape of the data strictly
+interface AnalysisUpdateData {
+  purchasePrice: number | string;
+  rehabCost: number | string;
+  estRent: number | string;
+  taxAmount: number | string;
+  interestRate: number | string;
+  downPaymentPct: number | string;
+  loanTermYears: number | string;
+  vacancyRate: number | string;
+  managementRate: number | string;
+  opexAnnual: number | string;
+  closingCosts: number | string;
+  id?: string;
+}
 
-  // GAUNTLET FIX: Helper to safely parse numbers, defaulting to 0 if NaN
-  const safeFloat = (val: any) => {
-    const parsed = parseFloat(val);
+export async function updateAnalysis(id: string, data: AnalysisUpdateData) {
+  if (!id) throw new Error('Analysis ID is required');
+
+  const safeFloat = (val: number | string | undefined) => {
+    if (val === undefined || val === '') return 0;
+    const parsed = typeof val === 'string' ? parseFloat(val) : val;
     return isNaN(parsed) ? 0 : parsed;
+  };
+  
+  const safeInt = (val: number | string | undefined) => {
+     if (val === undefined || val === '') return 30;
+     const parsed = typeof val === 'string' ? parseInt(val) : val;
+     return isNaN(parsed) ? 30 : parsed;
   };
 
   try {
@@ -22,7 +44,7 @@ export async function updateAnalysis(id: string, data: any) {
         taxAmount: safeFloat(data.taxAmount),
         interestRate: safeFloat(data.interestRate),
         downPaymentPct: safeFloat(data.downPaymentPct),
-        loanTermYears: parseInt(data.loanTermYears) || 30,
+        loanTermYears: safeInt(data.loanTermYears),
         vacancyRate: safeFloat(data.vacancyRate),
         managementRate: safeFloat(data.managementRate),
         opexAnnual: safeFloat(data.opexAnnual),
@@ -30,10 +52,11 @@ export async function updateAnalysis(id: string, data: any) {
       },
     });
 
-    revalidatePath(`/analysis/${id}`);
+    // FIXED: String concatenation to avoid interpolation errors
+    revalidatePath('/analysis/' + id);
     return { success: true };
   } catch (error) {
-    console.error("Update failed:", error);
-    return { success: false, error: "Failed to save analysis" };
+    console.error('Update failed:', error);
+    return { success: false, error: 'Failed to save analysis' };
   }
 }
